@@ -57,5 +57,10 @@ let package = Package(
         .testTarget(name: "BlurSecurityCoreTests", dependencies: ["BlurSecurityCore"]),
         .testTarget(name: "BlurKeychainTests", dependencies: ["BlurKeychain", "BlurSecurityCore"]),
         .testTarget(name: "BlurCryptoTests", dependencies: ["BlurCrypto", "BlurSecurityCore"]),
+        .testTarget(
+            name: "BlurCertificatesTests",
+            dependencies: ["BlurCertificates", "BlurSecurityCore"],
+            resources: [.copy("Fixtures")]
+        ),
     ]
 )
