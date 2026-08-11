@@ -55,5 +55,6 @@ let package = Package(
 
         // Tests — added one per module as modules are implemented.
         .testTarget(name: "BlurSecurityCoreTests", dependencies: ["BlurSecurityCore"]),
+        .testTarget(name: "BlurKeychainTests", dependencies: ["BlurKeychain", "BlurSecurityCore"]),
     ]
 )
