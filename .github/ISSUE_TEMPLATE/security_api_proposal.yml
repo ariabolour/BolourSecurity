@@ -1,0 +1,62 @@
+name: 🛡️ Security API proposal
+description: Formal proposal for new security-relevant public API (after an API Design discussion has converged)
+labels: ["api-proposal", "security-review"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This template is the written form of the [API review checklist](../../blob/main/docs/APIDesignPhilosophy.md). It's deliberately demanding — security API is forever. Link the Discussion thread where the design converged; proposals without prior discussion will usually be redirected there first.
+  - type: input
+    id: discussion
+    attributes:
+      label: Design discussion link
+    validations:
+      required: true
+  - type: textarea
+    id: api
+    attributes:
+      label: Proposed API (signatures + doc summary lines)
+      render: swift
+    validations:
+      required: true
+  - type: textarea
+    id: callsites
+    attributes:
+      label: Call sites
+      description: The three most common uses, as real code. This is what gets reviewed hardest.
+      render: swift
+    validations:
+      required: true
+  - type: textarea
+    id: threat_model
+    attributes:
+      label: Threat model
+      description: >-
+        What attack or mistake does this API defend against? What does an
+        attacker gain if it's misused? What is explicitly out of scope?
+    validations:
+      required: true
+  - type: textarea
+    id: misuse
+    attributes:
+      label: Misuse analysis
+      description: >-
+        How could a reasonable developer hold this wrong? For each plausible
+        misuse: is it a compile error, a typed runtime error, or documented —
+        and if only documented, why can't the type system do better?
+    validations:
+      required: true
+  - type: textarea
+    id: defaults
+    attributes:
+      label: Defaults
+      description: Every default value, and why each is the most secure reasonable choice. Name anything that weakens a guarantee and the `unsafe`/`unvalidated`/`software` spelling it uses.
+    validations:
+      required: true
+  - type: textarea
+    id: layer
+    attributes:
+      label: Module & layer fit
+      description: Which module, why it satisfies that module's one-sentence mission, and confirmation the dependency direction is downward-only.
+    validations:
+      required: true

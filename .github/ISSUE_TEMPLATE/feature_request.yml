@@ -1,0 +1,45 @@
+name: 🌟 Feature request
+description: Propose a capability (new public API should start as an API Design discussion — see CONTRIBUTING.md)
+labels: ["enhancement", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before filing: check the relevant [module spec](../../tree/main/docs/modules) — many "missing" features are documented deliberate omissions (e.g. unauthenticated ciphers, single-pin policies), and [Architecture §9](../../blob/main/docs/Architecture.md) lists what BlurSecurity deliberately does not do.
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: What can't you do today, and in what real scenario? Lead with the use case, not the solution.
+    validations:
+      required: true
+  - type: dropdown
+    id: module
+    attributes:
+      label: Which module does this belong to?
+      description: If the honest answer is "a new module" or "none of them," say so below — that's an ADR-level conversation and it's welcome.
+      options:
+        - BlurSecurityCore
+        - BlurCrypto
+        - BlurKeychain
+        - BlurBiometrics
+        - BlurCertificates
+        - BlurSecureStorage
+        - BlurNetworkSecurity
+        - BlurJWT
+        - BlurAppIntegrity
+        - BlurOAuth
+        - A new module / unsure
+    validations:
+      required: true
+  - type: textarea
+    id: sketch
+    attributes:
+      label: How might the call site read? (optional)
+      description: A sketch of the API in use — we design from the call site inward.
+      render: swift
+  - type: textarea
+    id: security
+    attributes:
+      label: Security notes (optional)
+      description: Any way this feature could be misused, and how the API might prevent that.

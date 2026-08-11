@@ -1,0 +1,67 @@
+name: 🐛 Bug report
+description: Something behaves incorrectly (for suspected vulnerabilities, use private security reporting instead — see SECURITY.md)
+labels: ["bug", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report. **If this bug has security impact — data exposed, a check bypassed, a guarantee broken — stop here and use [private security reporting](../../security/advisories/new) instead.** We respond within 48 hours.
+  - type: dropdown
+    id: module
+    attributes:
+      label: Module
+      options:
+        - BlurSecurityCore
+        - BlurCrypto
+        - BlurKeychain
+        - BlurBiometrics
+        - BlurCertificates
+        - BlurSecureStorage
+        - BlurNetworkSecurity
+        - BlurJWT
+        - BlurAppIntegrity
+        - BlurOAuth
+        - BlurSecurity (umbrella)
+        - Not sure
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: BlurSecurity version
+      placeholder: "e.g. 0.5.1, or a commit SHA"
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Xcode version, OS + version, device or simulator
+      placeholder: "Xcode 26.0, iOS 26.0, iPhone 16 (device)"
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What should happen, ideally citing the documentation that says so.
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: >-
+        What happens instead, including the full typed error if one is thrown.
+        ⚠️ Redact any real secrets, tokens, or credentials before pasting —
+        our errors are designed not to contain them, but your surrounding code might.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      description: The smallest snippet that shows the problem.
+      render: swift
+    validations:
+      required: true
