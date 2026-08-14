@@ -12,11 +12,12 @@ struct LoggingTests {
             .itemStored, .itemRead, .itemRemoved,
             .authenticationSucceeded, .authenticationFailed,
             .pinningFailure(host: "example.com"),
+            .developmentTrustOverrideCreated(hosts: ["localhost"]),
         ]
         for event in events {
             logger.log(event)   // must not crash
         }
-        #expect(events.count == 6)
+        #expect(events.count == 7)
     }
 
     @Test("a custom logger receives the events it is given")

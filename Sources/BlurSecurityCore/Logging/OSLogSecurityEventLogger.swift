@@ -26,6 +26,9 @@ public struct OSLogSecurityEventLogger: SecurityEventLogger {
             logger.notice("Local authentication failed")
         case .pinningFailure(let host):
             logger.error("Certificate pinning failed for host \(host, privacy: .public)")
+        case .developmentTrustOverrideCreated(let hosts):
+            let joined = hosts.sorted().joined(separator: ", ")
+            logger.error("Unvalidated trust override constructed for local-development hosts: \(joined, privacy: .public)")
         }
     }
 }

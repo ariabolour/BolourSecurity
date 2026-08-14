@@ -18,6 +18,10 @@ public struct SecurityEvent: Sendable, Hashable {
         case authenticationFailed
         /// Certificate pinning rejected a connection to `host` (a hostname is not a secret).
         case pinningFailure(host: String)
+        /// A local-development trust override was constructed, unconditionally bypassing
+        /// certificate validation for `hosts`. Always logged, regardless of the app's own
+        /// injected logger — this event is meant to be impossible to silence.
+        case developmentTrustOverrideCreated(hosts: Set<String>)
     }
 
     /// The event that occurred.
@@ -41,5 +45,9 @@ extension SecurityEvent {
     /// Certificate pinning rejected a connection to `host`.
     public static func pinningFailure(host: String) -> SecurityEvent {
         SecurityEvent(.pinningFailure(host: host))
+    }
+    /// A local-development trust override was constructed for `hosts`.
+    public static func developmentTrustOverrideCreated(hosts: Set<String>) -> SecurityEvent {
+        SecurityEvent(.developmentTrustOverrideCreated(hosts: hosts))
     }
 }
