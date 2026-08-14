@@ -4,7 +4,7 @@
 
 The security foundation for modern Apple applications — Keychain, cryptography, biometrics, certificate pinning, JWT, and OAuth behind elegant Swift 6 APIs that make the secure path the shortest path.
 
-> **Status: architecture phase.** The complete design — vision, module specifications, API philosophy, and engineering strategy — is published here for review before the first line of implementation. Code lands with [v0.1](ROADMAP.md). Design feedback is the most valuable contribution right now: [start a discussion](CONTRIBUTING.md).
+> **Status: v1.0, pre-audit.** All ten modules plus the umbrella package are implemented and tested against the design recorded in `docs/` — see [CHANGELOG](CHANGELOG.md) for what shipped and the [Known limitations](CHANGELOG.md#known-limitations) it names explicitly (device/hardware-gated round-trips, DocC site, audit). No independent security audit has been performed yet; treat this as a strong foundation to build on and review, not a finished, audited product. [ROADMAP](ROADMAP.md) covers what's next.
 
 ---
 
@@ -75,7 +75,7 @@ let header = try await session.tokens.validAccessToken().headerValue  // single-
 
 ## License
 
-Intended license: Apache-2.0, finalized (with an ADR) before the first tagged release — see [ROADMAP](ROADMAP.md).
+Apache License 2.0 — see [LICENSE](LICENSE) and [ADR-0007](docs/adr/0007-apache-2.0-license.md) for the reasoning.
 
 ---
 

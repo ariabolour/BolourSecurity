@@ -1,5 +1,7 @@
 # Roadmap
 
+> **Where things actually stand:** all code described through v1.0 below has shipped — see [CHANGELOG.md](CHANGELOG.md) for what's implemented and the limitations it names explicitly. Some v0.1/v0.5-era *process* acceptance criteria below (CI matrix breadth, DocC coverage audits, the 90%-coverage gate, benchmark suites, example apps, a device-farm lane) are still partial or outstanding rather than met milestone-by-milestone in order — the modules landed faster than the tooling around them. Treat the criteria below as the standing bar for v2.0 and beyond, not a claim that every earlier box is checked.
+
 The path from this blueprint to the security foundation for Apple platforms. Vision, mission, and core values live in [VISION.md](VISION.md); the five-year arc there is the destination, this file is the route. Releases ship when their acceptance criteria are met — readiness over calendar ([MANIFESTO](MANIFESTO.md): never optimize for speed).
 
 Modules land bottom-up because the layers do ([Architecture](docs/Architecture.md)): each release's modules build only on already-shipped, already-hardened layers.
