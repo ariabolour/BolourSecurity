@@ -28,14 +28,20 @@ public enum CryptoError: SecurityError {
     case insecureParameters(reason: String)
     /// A file could not be read for streaming hashing.
     case fileUnreadable(URL)
+    /// This hardware/build has no Secure Enclave (e.g. a pre-T2 Intel Mac). Never silently
+    /// substitutes a software key — see [ADR-0006](../../../docs/adr/0006-secure-enclave-first-key-design.md).
+    case secureEnclaveUnavailable
+    /// A Secure Enclave key operation (creation, lookup, signing) failed for a reason other than
+    /// the SE simply not existing (e.g. a Touch ID/passcode presence check failed).
+    case secureEnclaveOperationFailed(underlying: OSStatus)
 
     public var failureIsRecoverable: Bool {
         switch self {
-        case .fileUnreadable:
+        case .fileUnreadable, .secureEnclaveOperationFailed:
             return true
         case .invalidKeySize, .invalidKey, .sealFailed, .openFailed, .malformedMessage,
              .unsupportedFormatVersion, .suiteMismatch, .signingFailed, .keyDerivationFailed,
-             .insecureParameters:
+             .insecureParameters, .secureEnclaveUnavailable:
             return false
         }
     }
@@ -64,6 +70,10 @@ public enum CryptoError: SecurityError {
             return "Password-hashing parameters were rejected: \(reason)."
         case .fileUnreadable(let url):
             return "The file at \(url.path) could not be read."
+        case .secureEnclaveUnavailable:
+            return "This device has no Secure Enclave."
+        case .secureEnclaveOperationFailed(let status):
+            return "A Secure Enclave key operation failed (OSStatus \(status))."
         }
     }
 
@@ -81,6 +91,10 @@ public enum CryptoError: SecurityError {
             return "Raise the iteration count to at least the enforced floor."
         case .fileUnreadable:
             return "Confirm the file exists and is readable."
+        case .secureEnclaveUnavailable:
+            return "Use SigningKey<P256>.software() instead — the choice is explicit and visible at the call site."
+        case .secureEnclaveOperationFailed:
+            return "Retry; if it persists, confirm the app's keychain-access-groups entitlement covers this key's tag."
         case .invalidKey, .sealFailed, .malformedMessage, .signingFailed, .keyDerivationFailed:
             return nil
         }
