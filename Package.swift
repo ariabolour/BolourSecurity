@@ -44,7 +44,7 @@ let package = Package(
         .target(name: "BlurAppIntegrity", dependencies: ["BlurSecurityCore", "BlurCrypto", "BlurKeychain"]),
 
         // Layer 4 — Identity
-        .target(name: "BlurOAuth", dependencies: ["BlurJWT", "BlurSecureStorage", "BlurNetworkSecurity"]),
+        .target(name: "BlurOAuth", dependencies: ["BlurSecurityCore", "BlurJWT", "BlurSecureStorage", "BlurNetworkSecurity"]),
 
         // Umbrella — re-exports every module.
         .target(name: "BlurSecurity", dependencies: [
@@ -77,5 +77,9 @@ let package = Package(
             dependencies: ["BlurAppIntegrity", "BlurKeychain", "BlurSecurityCore"]
         ),
         .testTarget(name: "BlurJWTTests", dependencies: ["BlurJWT", "BlurCrypto", "BlurSecurityCore"]),
+        .testTarget(
+            name: "BlurOAuthTests",
+            dependencies: ["BlurOAuth", "BlurJWT", "BlurCrypto", "BlurSecurityCore"]
+        ),
     ]
 )
