@@ -67,5 +67,6 @@ let package = Package(
             dependencies: ["BlurNetworkSecurity", "BlurCertificates", "BlurSecurityCore"],
             resources: [.copy("Fixtures")]
         ),
+        .testTarget(name: "BlurBiometricsTests", dependencies: ["BlurBiometrics", "BlurSecurityCore"]),
     ]
 )
