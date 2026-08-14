@@ -91,10 +91,18 @@ public struct SecureEnclaveKey: Sendable {
             guard let externalRepresentation = SecKeyCopyExternalRepresentation(publicSecKey, &cfError) else {
                 throw CryptoError.secureEnclaveOperationFailed(underlying: errSecParam)
             }
-            // The X9.63 form SecKeyCopyExternalRepresentation produces for an EC public key is
-            // exactly CryptoKit's P256.Signing.PublicKey.rawRepresentation — verified by round-
-            // tripping through VerificationKey.isValidSignature in tests.
-            return VerificationKey(representation: externalRepresentation as Data)
+            // SecKeyCopyExternalRepresentation returns the X9.63 form (0x04 ‖ X ‖ Y, 65 bytes)
+            // for an EC public key. CryptoKit's own P256.Signing.PublicKey.rawRepresentation —
+            // what VerificationKey<P256> actually validates against — is the *compact* form:
+            // X ‖ Y with no leading tag byte, 64 bytes. Confirmed empirically (not assumed):
+            // a standalone probe printed CryptoKit's rawRepresentation.count as 64 and its first
+            // byte as an arbitrary coordinate byte, versus x963Representation.count as 65 with a
+            // fixed 0x04 first byte. Dropping that one leading byte is the entire conversion.
+            let compact = (externalRepresentation as Data).dropFirst()
+            guard compact.count == 64 else {
+                throw CryptoError.secureEnclaveOperationFailed(underlying: errSecParam)
+            }
+            return try VerificationKey(rawRepresentation: Data(compact))
         }
     }
 

@@ -40,7 +40,7 @@ let package = Package(
 
         // Layer 3 — Protocols & Services
         .target(name: "BlurNetworkSecurity", dependencies: ["BlurSecurityCore", "BlurCertificates"]),
-        .target(name: "BlurJWT", dependencies: ["BlurCrypto"]),
+        .target(name: "BlurJWT", dependencies: ["BlurSecurityCore", "BlurCrypto"]),
         .target(name: "BlurAppIntegrity", dependencies: ["BlurSecurityCore", "BlurCrypto", "BlurKeychain"]),
 
         // Layer 4 — Identity
@@ -76,5 +76,6 @@ let package = Package(
             name: "BlurAppIntegrityTests",
             dependencies: ["BlurAppIntegrity", "BlurKeychain", "BlurSecurityCore"]
         ),
+        .testTarget(name: "BlurJWTTests", dependencies: ["BlurJWT", "BlurCrypto", "BlurSecurityCore"]),
     ]
 )

@@ -6,6 +6,13 @@ public struct VerificationKey<A: SignatureAlgorithm>: Sendable, Hashable, Codabl
 
     init(representation: Data) { self.representation = representation }
 
+    /// Reconstructs a verification key from raw public-key bytes obtained out of band (e.g. a
+    /// JWK's coordinates, or another system's key export) — the inverse of ``rawRepresentation``.
+    public init(rawRepresentation: Data) throws(CryptoError) {
+        try A._validatePublicKeyRepresentation(rawRepresentation)
+        self.representation = rawRepresentation
+    }
+
     /// The raw public-key bytes.
     public var rawRepresentation: Data { representation }
 
