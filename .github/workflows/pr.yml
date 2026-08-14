@@ -1,0 +1,98 @@
+name: pr
+
+# Least-privilege by default (docs/CICDStrategy.md §2); jobs escalate individually if they ever need to.
+permissions:
+  contents: read
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: pr-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  dependency-graph-guard:
+    name: Zero-dependency guard
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      # ADR-0002: zero third-party dependencies, mechanically enforced — a Package.resolved
+      # with any entries at all means something got added.
+      - name: Fail if Package.resolved has any resolved dependency
+        run: |
+          if [ -f Package.resolved ]; then
+            count=$(python3 -c "import json,sys; d=json.load(open('Package.resolved')); print(len(d.get('pins', [])))")
+            if [ "$count" -ne 0 ]; then
+              echo "::error::Package.resolved has $count resolved dependencies; this package must have zero (ADR-0002)."
+              exit 1
+            fi
+          fi
+
+  build-and-test:
+    name: Build & test (${{ matrix.destination.name }})
+    runs-on: macos-15
+    strategy:
+      fail-fast: false
+      matrix:
+        destination:
+          - name: macOS
+            id: ""
+          - name: iOS Simulator
+            id: "platform=iOS Simulator,name=iPhone 16,OS=latest"
+          - name: watchOS Simulator
+            id: "platform=watchOS Simulator,name=Apple Watch Series 10 (46mm),OS=latest"
+          - name: visionOS Simulator
+            id: "platform=visionOS Simulator,name=Apple Vision Pro,OS=latest"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode.app
+
+      - name: Build (macOS, strict concurrency via swift-tools 6.0)
+        if: matrix.destination.name == 'macOS'
+        run: swift build
+
+      - name: Test (macOS)
+        if: matrix.destination.name == 'macOS'
+        run: swift test --enable-code-coverage
+
+      # Informational only for now, deliberately not a hard gate: a real chunk of this package
+      # is device/entitlement-gated by design (live Keychain SecItem calls, LAContext, real
+      # DCAppAttestService, ASWebAuthenticationSession — see each module's Testing Strategy) and
+      # shows as uncovered on any runner lacking that hardware, this one included. ROADMAP.md's
+      # "90% coverage floor" needs those specific gated call sites excluded from the metric (or
+      # covered via the still-outstanding app-hosted test target) before it can be a fair gate;
+      # doing that against invented numbers here would be worse than reporting honestly and
+      # deferring the threshold.
+      - name: Coverage summary (macOS, informational)
+        if: matrix.destination.name == 'macOS'
+        run: |
+          bin=$(swift build --show-bin-path)
+          xcrun llvm-profdata merge -sparse "$bin"/codecov/*.profraw -o "$bin/codecov/merged.profdata"
+          xcrun llvm-cov report \
+            "$bin/BlurSecurityPackageTests.xctest/Contents/MacOS/BlurSecurityPackageTests" \
+            -instr-profile "$bin/codecov/merged.profdata" \
+            -ignore-filename-regex="Tests/|\.build/|checkouts/" || true
+
+      # Simulator destinations don't run on a plain macOS runner via `swift build` alone —
+      # they need the umbrella scheme built through xcodebuild against a SwiftPM package.
+      - name: Build (simulator destinations)
+        if: matrix.destination.name != 'macOS'
+        run: xcodebuild build -scheme BlurSecurity -destination "${{ matrix.destination.id }}"
+
+  format-lint:
+    name: swift-format (invoked as a tool, not a dependency — ADR-0002)
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Lint
+        run: |
+          if command -v swift-format >/dev/null 2>&1; then
+            swift-format lint --recursive Sources Tests
+          else
+            echo "::warning::swift-format not present on this runner image; skipping (tracked separately from Package.swift per ADR-0002)."
+          fi
