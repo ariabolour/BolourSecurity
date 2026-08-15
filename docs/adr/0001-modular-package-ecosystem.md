@@ -13,7 +13,7 @@ A security framework adds a constraint ordinary libraries don't have: **when a v
 
 ## Decision
 
-One repository, one `Package.swift`, one version number, eleven library products (plus the umbrella). SPM products provide à-la-carte importing; the single semantic version guarantees that any BolourSecurity release is a single, fully tested, internally consistent snapshot of the whole ecosystem. Apps that import only `BolourKeychain` link only `BolourKeychain` and `BolourSecurityCore` — SPM's dead-target elimination means unused products cost nothing at runtime.
+One repository, one `Package.swift`, one version number, eleven library products (plus the umbrella). SPM products provide à-la-carte importing; the single semantic version guarantees that any BolourSecurity release is a single, fully tested, internally consistent snapshot of the whole ecosystem. Apps that import only `BolourKeychain` link only `BolourKeychain` and `BolourSecurityCore` — SPM's dead-target elimination means unused products cost nothing at runtime. (How the umbrella product actually re-exports the other ten is its own decision — [ADR-0008](0008-exported-import-for-umbrella-reexport.md).)
 
 ## Alternatives Considered
 
