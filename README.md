@@ -24,15 +24,16 @@ Apple ships world-class security primitives. Using them correctly means hand-ass
 import BlurKeychain
 
 let keychain = Keychain()
-try await keychain.store(token, for: .refreshToken)   // device-only, unlocked-only, no sync —
-                                                      // you did it right by accident
+try await keychain.store(token, for: "refresh-token")   // device-only, unlocked-only, no sync —
+                                                        // you did it right by accident
 ```
 
 ```swift
 import BlurSecureStorage
 import BlurBiometrics
 
-let vault = try await Vault.open(named: "HealthRecords", presence: .biometry())
+let context = try await BiometricAuthenticator().authenticate(reason: .init(verbatim: "Unlock your health records"))
+let vault = try await Vault.open(named: "HealthRecords", presence: .biometry(), context: context)
 try await vault.write(reportPDF, to: "reports/2026-08.pdf")
 ```
 

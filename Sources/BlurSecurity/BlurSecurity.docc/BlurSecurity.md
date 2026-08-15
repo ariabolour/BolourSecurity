@@ -39,7 +39,7 @@ Ten composable modules share one vocabulary through [`BlurSecurityCore`](../blur
 import BlurKeychain
 
 let keychain = Keychain()
-try await keychain.store(token, for: .refreshToken)   // device-only, unlocked-only, no sync
+try await keychain.store(token, for: "refresh-token")   // device-only, unlocked-only, no sync
 ```
 
 Each module's own documentation covers its full API, architecture, and the specific vulnerability classes it makes unrepresentable — start with whichever module matches the problem in front of you.
