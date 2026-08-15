@@ -10,10 +10,13 @@ public struct OAuthClient: Sendable {
     private let tokenStore: any SecretStore
     private let session: URLSession
     private let logger: (any SecurityEventLogger)?
+    #if !os(watchOS)
     private let authorizationPresenter: any AuthorizationSessionPresenting
+    #endif
 
     private static let tokenItemKey: ItemKey = "bolour.oauth.tokens"
 
+    #if !os(watchOS)
     public init(
         configuration: OAuthConfiguration, tokenStore: some SecretStore,
         session: URLSession = .shared, logger: (any SecurityEventLogger)? = nil
@@ -36,9 +39,30 @@ public struct OAuthClient: Sendable {
         self.logger = logger
         self.authorizationPresenter = authorizationPresenter
     }
+    #else
+    /// watchOS has no interactive-sign-in surface at all (`ASWebAuthenticationSession` is
+    /// unavailable there) — this initializer only supports `clientCredentialsToken()`-style
+    /// app-to-service auth on watchOS. See `signIn`'s watchOS note on the other platforms.
+    public init(
+        configuration: OAuthConfiguration, tokenStore: some SecretStore,
+        session: URLSession = .shared, logger: (any SecurityEventLogger)? = nil
+    ) {
+        self.configuration = configuration
+        self.tokenStore = tokenStore
+        self.session = session
+        self.logger = logger
+    }
+    #endif
 
+    #if !os(watchOS)
     /// The whole dance: PKCE pair, state, web session, code exchange, ID-token verification
     /// (when OIDC), token custody. Returns a live session.
+    ///
+    /// - Note: **Unavailable on watchOS.** `ASWebAuthenticationSession` and its presentation-
+    ///   anchor machinery don't exist on that platform — there is no interactive, web-based
+    ///   sign-in surface on Apple Watch. Use ``clientCredentialsToken()`` for app-to-service
+    ///   auth, or perform interactive sign-in on a paired iPhone and hand the resulting tokens
+    ///   to the Watch app through your own sync mechanism.
     @MainActor
     public func signIn(
         presentingFrom anchor: ASPresentationAnchor, prefersEphemeralSession: Bool = false
@@ -74,6 +98,7 @@ public struct OAuthClient: Sendable {
 
         return OAuthSession(user: user, tokens: tokenManager)
     }
+    #endif
 
     /// App-to-service (no user). Separate entry point; separate mental model.
     public func clientCredentialsToken() async throws(OAuthError) -> AccessToken {
@@ -109,8 +134,9 @@ public struct OAuthClient: Sendable {
         }
     }
 
-    // MARK: - Internals
+    // MARK: - Internals (all exclusively in service of `signIn`, gated the same way)
 
+    #if !os(watchOS)
     private func buildAuthorizationURL(
         endpoints: ResolvedEndpoints, pkce: PKCEPair, state: String, nonce: String?
     ) throws(OAuthError) -> URL {
@@ -203,4 +229,5 @@ public struct OAuthClient: Sendable {
         }
         return verified
     }
+    #endif
 }

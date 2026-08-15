@@ -41,13 +41,24 @@ final class LAContextEvaluator: PolicyEvaluating, @unchecked Sendable {
     }
 
     var evaluatedPolicyDomainState: Data? {
+        // `LAContext.evaluatedPolicyDomainState` is unavailable on watchOS (no biometry
+        // hardware, nothing to snapshot) — matches `BiometryState.current()`'s own watchOS
+        // short-circuit to `nil`.
+        #if os(watchOS)
+        return nil
+        #else
         lock.lock(); defer { lock.unlock() }
         return context.evaluatedPolicyDomainState
+        #endif
     }
 
     func setBiometryReuseDuration(_ duration: TimeInterval) {
+        // `LAContext.touchIDAuthenticationAllowableReuseDuration` is unavailable on watchOS (no
+        // Touch ID hardware) — no-op there rather than a compile error.
+        #if !os(watchOS)
         lock.lock(); defer { lock.unlock() }
         context.touchIDAuthenticationAllowableReuseDuration = duration
+        #endif
     }
 
     func invalidateContext() {

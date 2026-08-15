@@ -19,6 +19,13 @@ public enum AuthenticationPolicy: Sendable, Hashable {
         /// Recommended default: users are never stranded.
         case devicePasscode
         /// Biometry-or-fail: high-assurance flows, explicit choice.
+        ///
+        /// - Note: **Honest limit (watchOS).** LocalAuthentication on watchOS has no
+        ///   biometry-only policy to ask for at all — there is no Face ID/Touch ID/Optic ID
+        ///   hardware on Apple Watch, and `LAPolicy.deviceOwnerAuthenticationWithBiometrics` is
+        ///   unavailable there. On watchOS, `.biometry(fallback: .none)` behaves like
+        ///   `.biometry(fallback: .devicePasscode)` instead — passcode-inclusive, not
+        ///   biometry-or-fail — because that's the strictest policy the platform actually offers.
         case none
     }
 
@@ -27,7 +34,17 @@ public enum AuthenticationPolicy: Sendable, Hashable {
         case .biometry(.devicePasscode), .devicePasscodeOnly:
             return .deviceOwnerAuthentication
         case .biometry(.none):
+            // `.deviceOwnerAuthenticationWithBiometrics` (biometry required, no passcode
+            // fallback) is unavailable on watchOS — LocalAuthentication there only exposes
+            // `.deviceOwnerAuthentication`. Same honest-limit shape as `.devicePasscodeOnly`
+            // above: on watchOS, `.biometry(fallback: .none)` actually behaves like
+            // `.deviceOwnerAuthentication` (passcode-inclusive), because there is no stricter
+            // policy to ask for.
+            #if os(watchOS)
+            return .deviceOwnerAuthentication
+            #else
             return .deviceOwnerAuthenticationWithBiometrics
+            #endif
         case .userPresence:
             #if os(macOS)
             return .deviceOwnerAuthenticationWithBiometricsOrWatch

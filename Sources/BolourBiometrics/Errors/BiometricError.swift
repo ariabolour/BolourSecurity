@@ -76,9 +76,15 @@ public enum BiometricError: SecurityError, Hashable {
         case .userFallback: return .userChoseFallback
         case .systemCancel, .appCancel: return .systemCancelled
         case .passcodeNotSet: return .passcodeNotSet
+        // `.biometryNotEnrolled`/`.biometryLockout`/`.biometryNotAvailable` are unavailable on
+        // watchOS (no biometry hardware, no biometry-specific LAError codes there) — watchOS
+        // can never actually produce these, so falling through to `default` below is correct,
+        // not a loss of coverage.
+        #if !os(watchOS)
         case .biometryNotEnrolled: return .biometryNotEnrolled
         case .biometryLockout: return .biometryLockedOut
         case .biometryNotAvailable: return .notAvailable(.noBiometricHardwareOrPasscode)
+        #endif
         case .invalidContext, .notInteractive, nil: return .notAvailable(.contextInvalidated)
         default: return .notAvailable(.contextInvalidated)
         }

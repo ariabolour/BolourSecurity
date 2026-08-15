@@ -1,6 +1,9 @@
 import Foundation
 import AuthenticationServices
 
+// Mirrors `AuthorizationSessionPresenting`'s watchOS gating — `ASWebAuthenticationSession` and
+// its presentation-context machinery are unavailable there.
+#if !os(watchOS)
 /// The real `AuthorizationSessionPresenting` conformer: a thin async bridge over
 /// `ASWebAuthenticationSession`'s completion-handler API, matching the bridge pattern already
 /// used for `LAContext`/`DCAppAttestService`.
@@ -52,3 +55,4 @@ final class RealAuthorizationSession: NSObject, AuthorizationSessionPresenting, 
         lock.lock(); activeSession = nil; activeContextProvider = nil; lock.unlock()
     }
 }
+#endif

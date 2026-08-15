@@ -13,11 +13,20 @@ public struct BiometryState: Sendable, Hashable {
 
     /// Captures the current state, or `nil` if biometry can't be evaluated at all right now
     /// (no hardware, nothing enrolled — there is no set to snapshot).
+    ///
+    /// - Note: **Honest limit (watchOS).** Apple Watch has no Face ID/Touch ID/Optic ID
+    ///   hardware and `LAPolicy.deviceOwnerAuthenticationWithBiometrics` is unavailable there —
+    ///   there is no biometry-specific domain state to snapshot at all, so this always returns
+    ///   `nil` on watchOS, the same as the documented "no hardware" case above.
     public static func current() -> BiometryState? {
+        #if os(watchOS)
+        return nil
+        #else
         let evaluator = LAContextEvaluator()
         guard evaluator.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics).canEvaluate,
               let domainState = evaluator.evaluatedPolicyDomainState
         else { return nil }
         return BiometryState(domainState: domainState)
+        #endif
     }
 }

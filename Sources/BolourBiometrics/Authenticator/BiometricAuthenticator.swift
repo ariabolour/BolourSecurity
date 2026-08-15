@@ -26,7 +26,17 @@ public struct BiometricAuthenticator: Sendable {
     /// lockout, or passcode state between calls, so callers should check late, not early.
     public func availability() -> BiometryAvailability {
         let evaluator = makeEvaluator()
+        // `.deviceOwnerAuthenticationWithBiometrics` is unavailable on watchOS (no biometry
+        // hardware, no biometry-only LAPolicy case there). Probing `.deviceOwnerAuthentication`
+        // for both is safe, not just a workaround: `.folding` only reports a biometric-specific
+        // result (`.available`/`.notEnrolled`/`.lockedOut`) when the probe also resolves a
+        // `BiometryKind`, and watchOS never resolves one (no Face/Touch/Optic ID) — so this
+        // still folds correctly to `.passcodeOnly`/`.unavailable` there, never a false positive.
+        #if os(watchOS)
+        let biometricProbe = evaluator.canEvaluatePolicy(.deviceOwnerAuthentication)
+        #else
         let biometricProbe = evaluator.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics)
+        #endif
         let passcodeProbe = evaluator.canEvaluatePolicy(.deviceOwnerAuthentication)
         return .folding(biometricProbe: biometricProbe, passcodeProbe: passcodeProbe)
     }
