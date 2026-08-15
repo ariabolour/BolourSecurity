@@ -1,42 +1,57 @@
 # Changelog
 
-All notable changes to BlurSecurity are documented here, per [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) with the discipline defined in [ReleaseStrategy §5](docs/ReleaseStrategy.md): entries are written with the change that makes them true, and the `Security` section is never omitted (releases with no security changes say so).
+All notable changes to BolourSecurity are documented here, per [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) with the discipline defined in [ReleaseStrategy §5](docs/ReleaseStrategy.md): entries are written with the change that makes them true, and the `Security` section is never omitted (releases with no security changes say so).
 
 ## [Unreleased]
 
 ### Security
-- Nothing yet since 1.0.0.
+- Nothing yet since 0.9.0-beta.
 
-## [1.0.0] - 2026-08-15
+## [0.9.0-beta] - 2026-08-15
 
-The first code release: all ten modules plus the umbrella package, built module-by-module from the architecture recorded in `docs/`.
+The first code release: all ten modules plus the umbrella package, built module-by-module from the architecture recorded in `docs/`. Tagged `0.9.0-beta`, not `1.0.0` — every module this ladder scopes through 1.0 exists in code, but the 1.0 *process* gates (audit, real-device validation, complete DocC, external review) are not yet met. See [ROADMAP's 1.0 gate checklist](ROADMAP.md#whats-required-before-100) for exactly what's outstanding, and [the module maturity table](README.md#module-maturity) for per-module status.
+
+### Changed
+- **Renamed the project from its working name `BlurSecurity` to `BolourSecurity`**, consistently across every product/target/module name, import, source and test directory, doc, and CI reference. No mixed naming remains — verified via a repository-wide sweep.
+- **Persisted Keychain item-key namespaces and HKDF `info` strings changed from a `blur.*` prefix to `bolour.*`** (`BolourAppIntegrity`'s attestation-state key, `BolourOAuth`'s token item key, `BolourSecureStorage.TokenStore`'s default namespace, and `BolourSecureStorage.Vault`'s file-key/manifest-key/master-key derivation strings). This is a breaking change for anything that persisted data under the old prefix — but this package has never been tagged or published, so there is no real installed base affected. Recorded here as the migration-documentation discipline this project intends to hold itself to from 1.0.0 onward: a persisted-identifier rename after a real release would ship with an explicit migration guide and a compatibility path, not a silent rename.
 
 ### Added
-- **BlurSecurityCore** — shared vocabulary: `SecureBytes`, `ProtectionPolicy`/`PresenceRequirement`, typed `SecurityError`, redacting `SecurityEventLogger`, and the Core protocol seams (`SecretStore`, `TrustEvaluating`, `AttestationProviding`, `PresenceAuthenticated`) that keep every higher module independently importable.
-- **BlurCrypto** — hashing (SHA-2, streaming file digests), HMAC, AES-256-GCM/ChaCha20-Poly1305 sealing via a versioned envelope, software P-256/Ed25519 signing, HKDF/PBKDF2 key derivation, `SecureRandom`, and Secure Enclave-backed P-256 signing keys (`SecureEnclaveKey`) per [ADR-0006](docs/adr/0006-secure-enclave-first-key-design.md).
-- **BlurKeychain** — a typed, async, value-semantic front end to the Data Protection keychain; `@KeychainStored` and `SecretStore` conformance.
-- **BlurCertificates** — an in-tree, fuzz-hardened X.509/DER parser for introspection, `SecTrust`-backed trust evaluation, and SPKI pinning whose shape makes a single-pin policy a compile error.
-- **BlurNetworkSecurity** — `URLSession.secure(policy:)` and `SecureSessionDelegate`: fail-closed certificate pinning and a TLS floor enforced structurally, with a self-indicting local-development override.
-- **BlurBiometrics** — `BiometricAuthenticator`: Face ID/Touch ID/Optic ID/passcode behind one policy API, producing the `AuthenticatedContext` that closes the `PresenceAuthenticated` seam.
-- **BlurSecureStorage** — `Vault` (an encrypted, actor-isolated file container with a KDF-derived per-file key hierarchy and a sealed manifest) and `TokenStore` (the canonical `SecretStore` conformer with expiry semantics).
-- **BlurAppIntegrity** — `AttestationService`: the full App Attest lifecycle (key generation, attestation, assertions, invalidation recovery) as a state machine, plus `DeviceCheckToken`.
-- **BlurJWT** — JWS signing/verification (ES256, EdDSA, HS256) where algorithm confusion and `alg: none` are unrepresentable by construction, plus JWK/JWKS parsing with a caching, single-flight `RemoteJWKSet`.
-- **BlurOAuth** — Authorization Code + PKCE via `ASWebAuthenticationSession`, OIDC discovery and ID-token verification, and `TokenManager`'s single-flight, rotation-aware token refresh.
-- **BlurSecurity** — the umbrella product re-exporting all ten modules behind one `import`.
+- **BolourSecurityCore** — shared vocabulary: `SecureBytes`, `ProtectionPolicy`/`PresenceRequirement`, typed `SecurityError`, redacting `SecurityEventLogger`, and the Core protocol seams (`SecretStore`, `TrustEvaluating`, `AttestationProviding`, `PresenceAuthenticated`) that keep every higher module independently importable.
+- **BolourCrypto** — hashing (SHA-2, streaming file digests), HMAC, AES-256-GCM/ChaCha20-Poly1305 sealing via a versioned envelope, software P-256/Ed25519 signing, HKDF/PBKDF2 key derivation, `SecureRandom`, and Secure Enclave-backed P-256 signing keys (`SecureEnclaveKey`) per [ADR-0006](docs/adr/0006-secure-enclave-first-key-design.md).
+- **BolourKeychain** — a typed, async, value-semantic front end to the Data Protection keychain; `@KeychainStored` and `SecretStore` conformance.
+- **BolourCertificates** — an in-tree, fuzz-hardened X.509/DER parser for introspection, `SecTrust`-backed trust evaluation, and SPKI pinning whose shape makes a single-pin policy a compile error.
+- **BolourNetworkSecurity** — `URLSession.secure(policy:)` and `SecureSessionDelegate`: fail-closed certificate pinning and a TLS floor enforced structurally, with a self-indicting local-development override.
+- **BolourBiometrics** — `BiometricAuthenticator`: Face ID/Touch ID/Optic ID/passcode behind one policy API, producing the `AuthenticatedContext` that closes the `PresenceAuthenticated` seam.
+- **BolourSecureStorage** — `Vault` (an encrypted, actor-isolated file container with a KDF-derived per-file key hierarchy and a sealed manifest) and `TokenStore` (the canonical `SecretStore` conformer with expiry semantics).
+- **BolourAppIntegrity** — `AttestationService`: the full App Attest lifecycle (key generation, attestation, assertions, invalidation recovery) as a state machine, plus `DeviceCheckToken`.
+- **BolourJWT** — JWS signing/verification (ES256, EdDSA, HS256) where algorithm confusion and `alg: none` are unrepresentable by construction, plus JWK/JWKS parsing with a caching, single-flight `RemoteJWKSet`.
+- **BolourOAuth** — Authorization Code + PKCE via `ASWebAuthenticationSession`, OIDC discovery and ID-token verification, and `TokenManager`'s single-flight, rotation-aware token refresh.
+- **BolourSecurity** — the umbrella product re-exporting all ten modules behind one `import`.
 - Apache-2.0 `LICENSE`, per [ADR-0007](docs/adr/0007-apache-2.0-license.md).
 - `pr.yml`: a build matrix across macOS/iOS/watchOS/visionOS simulators, `swift test`, an informational coverage report, and the zero-third-party-dependency guard.
+- **[THREAT_MODEL.md](THREAT_MODEL.md)** — assets, threat actors, explicit non-goals, the fail-stop `precondition` policy, and a per-module attack-surface/mitigation table.
+- **[docs/IntegrationTesting.md](docs/IntegrationTesting.md)** — what's device-tested today (three suites, tagged `.requiresDevice`), what has zero automated hardware coverage (Biometrics, AppIntegrity, OAuth's real-session paths), a manual checklist, and a device-farm strategy.
+- A **module maturity table** ([README](README.md#module-maturity)) and a **1.0 gate checklist** ([ROADMAP](ROADMAP.md#whats-required-before-100)) tracking the nine gates before a 1.0.0 tag.
+- Explicit **Non-Goals** for `BolourCertificates`, a **validation-boundary table** for `BolourJWT`, and a **client-vs-server proof table** for `BolourAppIntegrity`.
+- ADR-0006 expanded with a `SecKey`-vs-CryptoKit-`SecureEnclave.P256.Signing.PrivateKey` comparison — `SecKey` stays, now with the reasoning written down.
+- Two more questions on the [API review checklist](docs/APIDesignPhilosophy.md#the-api-review-checklist): `Sendable` correctness, overload ambiguity.
 
 ### Security
 - Every module's typed error domain follows the `SecurityError` redaction contract: no case may carry key material, plaintext, tokens, or credentials in its description.
-- Certificate pinning (`BlurCertificates`, `BlurNetworkSecurity`) is additive over system trust, never a replacement for it, and fails closed on an expired pin set rather than silently downgrading to unpinned.
-- `BlurJWT`'s verifier derives its acceptable-algorithm allowlist from its own key set, never from a token's header — the standard mechanism for `alg: none` and algorithm-confusion attacks has no code path to reach.
-- `BlurOAuth` has no `clientSecret` parameter on its public-client configuration, and PKCE/`state` are generated internally per attempt with no API to disable, downgrade, or override either.
+- Certificate pinning (`BolourCertificates`, `BolourNetworkSecurity`) is additive over system trust, never a replacement for it, and fails closed on an expired pin set rather than silently downgrading to unpinned.
+- `BolourJWT`'s verifier derives its acceptable-algorithm allowlist from its own key set, never from a token's header — the standard mechanism for `alg: none` and algorithm-confusion attacks has no code path to reach.
+- `BolourOAuth` has no `clientSecret` parameter on its public-client configuration, and PKCE/`state` are generated internally per attempt with no API to disable, downgrade, or override either.
 - `SecureEnclaveKey` creation never silently falls back to a software key on hardware without a Secure Enclave; it throws a typed, distinctly-named error so the fallback is always a visible call-site decision.
+- `SecureEnclaveKey.load(tag:)`'s force-cast (`secKey as! SecKey`) is now guarded by a `CFGetTypeID` check. The obvious `as?` fix turned out to compile as an unconditional success for this CF-bridged type — not a real check — so `CFGetTypeID` is the actual runtime verification. Was the one force-cast in the codebase; now defense-in-depth instead of an unchecked assumption.
+- `SigningKey.software()`'s one `try!` reviewed against the fail-stop policy in [THREAT_MODEL.md](THREAT_MODEL.md#fail-stop-policy) and confirmed infallible by construction; its DocC now states the invariant.
+- `SecureBytes`'s docs expanded to cover what's zeroed and when, what copies escape that guarantee, bridging risk, logging, and debugger/core-dump limits — still no claim of guaranteed erasure from every memory location.
+- `TokenManager`'s single-flight refresh now has test coverage at the scale it's meant to hold under (100 concurrent callers, up from 20), plus a refresh-failure-propagates-to-every-waiter test and a rotation-failure test proving prior stored tokens survive a Keychain write failure intact.
+- The DER parser's OID decoder had zero adversarial-input coverage; added truncated-arc, oversized-arc (confirms Swift's non-trapping shift can't crash on overflow), and zero-length-content tests, plus a 50,000-element iteration-scale test backing up the claim that `Certificate.swift` never recurses into attacker-controlled depth.
 
 ### Known limitations
 Recorded here rather than left implicit, matching every module's own "Honest limits" documentation:
-- `BlurSecureStorage.Vault`'s master key is software-held, not yet Secure-Enclave-wrapped; `writeStream`/`readStream` buffer their full payload rather than encrypting in constant-memory segments.
-- `BlurNetworkSecurity`'s JWKS/TLS-floor enforcement and `BlurJWT.RemoteJWKSet`'s caching are TTL-based, not full `Cache-Control`-header-aware.
-- Real device/hardware round-trips (live Keychain access-group items, Secure Enclave key creation, biometric prompts, App Attest, `ASWebAuthenticationSession`) are unit-tested against scripted seams throughout, but are device/entitlement-gated for real execution — there is no CI lane that runs them yet (`nightly.yml`, a device-farm runner, and an app-hosted test target are all still outstanding).
+- `BolourSecureStorage.Vault`'s master key is software-held, not yet Secure-Enclave-wrapped; `writeStream`/`readStream` buffer their full payload rather than encrypting in constant-memory segments.
+- `BolourNetworkSecurity`'s JWKS/TLS-floor enforcement and `BolourJWT.RemoteJWKSet`'s caching are TTL-based, not full `Cache-Control`-header-aware.
+- Real device/hardware round-trips are unit-tested against scripted seams throughout, but device/entitlement-gated for real execution — see [docs/IntegrationTesting.md](docs/IntegrationTesting.md) for exactly which three suites are tagged `.requiresDevice` (and currently run only when their environment probe happens to succeed, in no CI lane today), and which modules (Biometrics, AppIntegrity, real OAuth sessions) have zero automated hardware coverage at all, gated or otherwise, because there's no automated way to drive a Face ID prompt or a real App Attest environment from an unentitled test process. A device-farm runner and `BolourSecurityIntegrationApp` remain outstanding — see the [1.0 gate checklist](ROADMAP.md#whats-required-before-100).
 - DocC ships only a landing page today, not the full per-module reference site or the "Store Your First Secret" tutorial; there is no published documentation site yet.
 - No independent security audit has been performed.
