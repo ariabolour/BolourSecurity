@@ -81,7 +81,7 @@ jobs:
           bin=$(swift build --show-bin-path)
           xcrun llvm-profdata merge -sparse "$bin"/codecov/*.profraw -o "$bin/codecov/merged.profdata"
           xcrun llvm-cov report \
-            "$bin/BlurSecurityPackageTests.xctest/Contents/MacOS/BlurSecurityPackageTests" \
+            "$bin/BolourSecurityPackageTests.xctest/Contents/MacOS/BolourSecurityPackageTests" \
             -instr-profile "$bin/codecov/merged.profdata" \
             -ignore-filename-regex="Tests/|\.build/|checkouts/" || true
 
@@ -89,7 +89,7 @@ jobs:
       # they need the umbrella scheme built through xcodebuild against a SwiftPM package.
       - name: Build (simulator destinations)
         if: matrix.destination.name != 'macOS'
-        run: xcodebuild build -scheme BlurSecurity -destination "${{ matrix.destination.id }}"
+        run: xcodebuild build -scheme BolourSecurity -destination "${{ matrix.destination.id }}"
 
   format-lint:
     name: swift-format (invoked as a tool, not a dependency — ADR-0002)

@@ -3,7 +3,7 @@
 import PackageDescription
 
 let package = Package(
-    name: "BlurSecurity",
+    name: "BolourSecurity",
     platforms: [
         .iOS(.v16),
         .macOS(.v13),
@@ -12,74 +12,74 @@ let package = Package(
     ],
     products: [
         // Umbrella: everything with a single import.
-        .library(name: "BlurSecurity", targets: ["BlurSecurity"]),
+        .library(name: "BolourSecurity", targets: ["BolourSecurity"]),
         // À-la-carte products, one per module.
-        .library(name: "BlurSecurityCore", targets: ["BlurSecurityCore"]),
-        .library(name: "BlurCrypto", targets: ["BlurCrypto"]),
-        .library(name: "BlurKeychain", targets: ["BlurKeychain"]),
-        .library(name: "BlurBiometrics", targets: ["BlurBiometrics"]),
-        .library(name: "BlurCertificates", targets: ["BlurCertificates"]),
-        .library(name: "BlurSecureStorage", targets: ["BlurSecureStorage"]),
-        .library(name: "BlurNetworkSecurity", targets: ["BlurNetworkSecurity"]),
-        .library(name: "BlurJWT", targets: ["BlurJWT"]),
-        .library(name: "BlurAppIntegrity", targets: ["BlurAppIntegrity"]),
-        .library(name: "BlurOAuth", targets: ["BlurOAuth"]),
+        .library(name: "BolourSecurityCore", targets: ["BolourSecurityCore"]),
+        .library(name: "BolourCrypto", targets: ["BolourCrypto"]),
+        .library(name: "BolourKeychain", targets: ["BolourKeychain"]),
+        .library(name: "BolourBiometrics", targets: ["BolourBiometrics"]),
+        .library(name: "BolourCertificates", targets: ["BolourCertificates"]),
+        .library(name: "BolourSecureStorage", targets: ["BolourSecureStorage"]),
+        .library(name: "BolourNetworkSecurity", targets: ["BolourNetworkSecurity"]),
+        .library(name: "BolourJWT", targets: ["BolourJWT"]),
+        .library(name: "BolourAppIntegrity", targets: ["BolourAppIntegrity"]),
+        .library(name: "BolourOAuth", targets: ["BolourOAuth"]),
     ],
     targets: [
         // Layer 0 — Foundation
-        .target(name: "BlurSecurityCore"),
+        .target(name: "BolourSecurityCore"),
 
         // Layer 1 — Primitives
-        .target(name: "BlurCrypto", dependencies: ["BlurSecurityCore"]),
-        .target(name: "BlurKeychain", dependencies: ["BlurSecurityCore"]),
+        .target(name: "BolourCrypto", dependencies: ["BolourSecurityCore"]),
+        .target(name: "BolourKeychain", dependencies: ["BolourSecurityCore"]),
 
         // Layer 2 — Capabilities
-        .target(name: "BlurBiometrics", dependencies: ["BlurSecurityCore"]),
-        .target(name: "BlurCertificates", dependencies: ["BlurCrypto"]),
-        .target(name: "BlurSecureStorage", dependencies: ["BlurKeychain", "BlurCrypto"]),
+        .target(name: "BolourBiometrics", dependencies: ["BolourSecurityCore"]),
+        .target(name: "BolourCertificates", dependencies: ["BolourCrypto"]),
+        .target(name: "BolourSecureStorage", dependencies: ["BolourKeychain", "BolourCrypto"]),
 
         // Layer 3 — Protocols & Services
-        .target(name: "BlurNetworkSecurity", dependencies: ["BlurSecurityCore", "BlurCertificates"]),
-        .target(name: "BlurJWT", dependencies: ["BlurSecurityCore", "BlurCrypto"]),
-        .target(name: "BlurAppIntegrity", dependencies: ["BlurSecurityCore", "BlurCrypto", "BlurKeychain"]),
+        .target(name: "BolourNetworkSecurity", dependencies: ["BolourSecurityCore", "BolourCertificates"]),
+        .target(name: "BolourJWT", dependencies: ["BolourSecurityCore", "BolourCrypto"]),
+        .target(name: "BolourAppIntegrity", dependencies: ["BolourSecurityCore", "BolourCrypto", "BolourKeychain"]),
 
         // Layer 4 — Identity
-        .target(name: "BlurOAuth", dependencies: ["BlurSecurityCore", "BlurJWT", "BlurSecureStorage", "BlurNetworkSecurity"]),
+        .target(name: "BolourOAuth", dependencies: ["BolourSecurityCore", "BolourJWT", "BolourSecureStorage", "BolourNetworkSecurity"]),
 
         // Umbrella — re-exports every module.
-        .target(name: "BlurSecurity", dependencies: [
-            "BlurSecurityCore", "BlurCrypto", "BlurKeychain", "BlurBiometrics",
-            "BlurCertificates", "BlurSecureStorage", "BlurNetworkSecurity",
-            "BlurJWT", "BlurAppIntegrity", "BlurOAuth",
+        .target(name: "BolourSecurity", dependencies: [
+            "BolourSecurityCore", "BolourCrypto", "BolourKeychain", "BolourBiometrics",
+            "BolourCertificates", "BolourSecureStorage", "BolourNetworkSecurity",
+            "BolourJWT", "BolourAppIntegrity", "BolourOAuth",
         ]),
 
         // Tests — added one per module as modules are implemented.
-        .testTarget(name: "BlurSecurityCoreTests", dependencies: ["BlurSecurityCore"]),
-        .testTarget(name: "BlurKeychainTests", dependencies: ["BlurKeychain", "BlurSecurityCore"]),
-        .testTarget(name: "BlurCryptoTests", dependencies: ["BlurCrypto", "BlurSecurityCore"]),
+        .testTarget(name: "BolourSecurityCoreTests", dependencies: ["BolourSecurityCore"]),
+        .testTarget(name: "BolourKeychainTests", dependencies: ["BolourKeychain", "BolourSecurityCore"]),
+        .testTarget(name: "BolourCryptoTests", dependencies: ["BolourCrypto", "BolourSecurityCore"]),
         .testTarget(
-            name: "BlurCertificatesTests",
-            dependencies: ["BlurCertificates", "BlurSecurityCore"],
+            name: "BolourCertificatesTests",
+            dependencies: ["BolourCertificates", "BolourSecurityCore"],
             resources: [.copy("Fixtures")]
         ),
         .testTarget(
-            name: "BlurNetworkSecurityTests",
-            dependencies: ["BlurNetworkSecurity", "BlurCertificates", "BlurSecurityCore"],
+            name: "BolourNetworkSecurityTests",
+            dependencies: ["BolourNetworkSecurity", "BolourCertificates", "BolourSecurityCore"],
             resources: [.copy("Fixtures")]
         ),
-        .testTarget(name: "BlurBiometricsTests", dependencies: ["BlurBiometrics", "BlurSecurityCore"]),
+        .testTarget(name: "BolourBiometricsTests", dependencies: ["BolourBiometrics", "BolourSecurityCore"]),
         .testTarget(
-            name: "BlurSecureStorageTests",
-            dependencies: ["BlurSecureStorage", "BlurKeychain", "BlurCrypto", "BlurSecurityCore"]
+            name: "BolourSecureStorageTests",
+            dependencies: ["BolourSecureStorage", "BolourKeychain", "BolourCrypto", "BolourSecurityCore"]
         ),
         .testTarget(
-            name: "BlurAppIntegrityTests",
-            dependencies: ["BlurAppIntegrity", "BlurKeychain", "BlurSecurityCore"]
+            name: "BolourAppIntegrityTests",
+            dependencies: ["BolourAppIntegrity", "BolourKeychain", "BolourSecurityCore"]
         ),
-        .testTarget(name: "BlurJWTTests", dependencies: ["BlurJWT", "BlurCrypto", "BlurSecurityCore"]),
+        .testTarget(name: "BolourJWTTests", dependencies: ["BolourJWT", "BolourCrypto", "BolourSecurityCore"]),
         .testTarget(
-            name: "BlurOAuthTests",
-            dependencies: ["BlurOAuth", "BlurJWT", "BlurCrypto", "BlurSecurityCore"]
+            name: "BolourOAuthTests",
+            dependencies: ["BolourOAuth", "BolourJWT", "BolourCrypto", "BolourSecurityCore"]
         ),
     ]
 )

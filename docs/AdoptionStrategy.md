@@ -1,6 +1,6 @@
 # Adoption Strategy
 
-BlurSecurity wins adoption the way infrastructure does: by being obviously correct, easy to start, and safe to bet on. No growth hacks — credibility compounding.
+BolourSecurity wins adoption the way infrastructure does: by being obviously correct, easy to start, and safe to bet on. No growth hacks — credibility compounding.
 
 ## 1. Positioning
 
@@ -22,8 +22,8 @@ Against the field ([CompetitiveAnalysis](CompetitiveAnalysis.md)): existing opti
 Most targets already have security code. Migration guides are therefore first-class product surface:
 
 - *From raw Security.framework* — the mechanical `SecItemAdd` → `Keychain` mapping table.
-- *From KeychainAccess / Valet* — API correspondence plus the `migrate(from: legacyQuery)` helper ([BlurKeychain roadmap](modules/BlurKeychain.md)) that reads existing items in place — adopting must never mean logging users out.
-- *Coexistence guarantee:* BlurSecurity touches only its own items/state; incremental, module-by-module adoption is the documented default path. "Try `BlurKeychain` in one feature" is the wedge; the ecosystem's coherence does the rest.
+- *From KeychainAccess / Valet* — API correspondence plus the `migrate(from: legacyQuery)` helper ([BolourKeychain roadmap](modules/BolourKeychain.md)) that reads existing items in place — adopting must never mean logging users out.
+- *Coexistence guarantee:* BolourSecurity touches only its own items/state; incremental, module-by-module adoption is the documented default path. "Try `BolourKeychain` in one feature" is the wedge; the ecosystem's coherence does the rest.
 
 ## 4. Trust Signals (the checklist evaluators bring)
 
@@ -37,4 +37,4 @@ Working in our favor by design: zero dependencies, 100% documented, ADRs public,
 
 ## 6. Measures (health, not vanity)
 
-Production adoptions we know of (self-reported registry in Discussions), migration-guide traffic, time-to-first-response on issues, external-contributor share of merged PRs, and — the north star — *reported security issues in adopting apps traced to BlurSecurity misuse*, which should trend toward structurally impossible.
+Production adoptions we know of (self-reported registry in Discussions), migration-guide traffic, time-to-first-response on issues, external-contributor share of merged PRs, and — the north star — *reported security issues in adopting apps traced to BolourSecurity misuse*, which should trend toward structurally impossible.

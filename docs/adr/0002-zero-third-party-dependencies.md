@@ -7,13 +7,13 @@
 
 ## Context
 
-Swift packages routinely pull in dependency graphs the author has never audited. For most libraries that is a pragmatic trade. For a security framework it is a contradiction: BlurSecurity asks apps in banking, healthcare, and government to place it inside their trust boundary. Every transitive dependency we add is a vendor those apps did not choose, with its own maintainers, release process, and compromise surface. Supply-chain attacks on package ecosystems are no longer hypothetical; they are the dominant modern vector.
+Swift packages routinely pull in dependency graphs the author has never audited. For most libraries that is a pragmatic trade. For a security framework it is a contradiction: BolourSecurity asks apps in banking, healthcare, and government to place it inside their trust boundary. Every transitive dependency we add is a vendor those apps did not choose, with its own maintainers, release process, and compromise surface. Supply-chain attacks on package ecosystems are no longer hypothetical; they are the dominant modern vector.
 
 There are real temptations: swift-crypto for algorithm breadth, swift-certificates for X.509, a testing helper here, a lint plugin there.
 
 ## Decision
 
-BlurSecurity's package graph contains **zero third-party dependencies — permanently, including test targets, benchmark targets, and build/lint plugins.** We depend on the Swift standard library and Apple's SDK frameworks (Foundation, CryptoKit, Security, LocalAuthentication, DeviceCheck, AuthenticationServices, os). Where an Apple SDK lacks a capability (e.g. full X.509 parsing), we implement the minimal slice we need in-tree (`BlurCertificates` parses exactly the fields required for validation and pinning) or we declare the capability out of scope — we do not import it.
+BolourSecurity's package graph contains **zero third-party dependencies — permanently, including test targets, benchmark targets, and build/lint plugins.** We depend on the Swift standard library and Apple's SDK frameworks (Foundation, CryptoKit, Security, LocalAuthentication, DeviceCheck, AuthenticationServices, os). Where an Apple SDK lacks a capability (e.g. full X.509 parsing), we implement the minimal slice we need in-tree (`BolourCertificates` parses exactly the fields required for validation and pinning) or we declare the capability out of scope — we do not import it.
 
 Development *tooling invoked from CI* (formatters, DocC) may run as external processes, but nothing third-party is ever linked into, or resolvable from, `Package.swift`.
 

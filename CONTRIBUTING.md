@@ -1,4 +1,4 @@
-# Contributing to BlurSecurity
+# Contributing to BolourSecurity
 
 Thank you for helping build the security layer Apple apps deserve. This guide covers the practical path from idea to merged PR. The project's standards live in the [MANIFESTO](MANIFESTO.md); the process authority lives in [GOVERNANCE](GOVERNANCE.md).
 
@@ -14,7 +14,7 @@ Thank you for helping build the security layer Apple apps deserve. This guide co
 Latest stable Xcode; no other tools required (zero dependencies is a feature you inherit — see [ADR-0002](docs/adr/0002-zero-third-party-dependencies.md)).
 
 ```
-git clone <repo> && cd BlurSecurity
+git clone <repo> && cd BolourSecurity
 swift build && swift test          # Tier 1–2; device-tagged suites skip automatically
 swift format lint --recursive .    # matches CI
 ```

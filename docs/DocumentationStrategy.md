@@ -11,13 +11,13 @@ Documentation is part of the API (Manifesto, Law 8). This document defines what 
 - **Security Considerations article** — required per module: the threat model addressed, the guarantees made, the honest limits (what this module does *not* protect against), and the mistakes it prevents. This article is reviewed by a second maintainer like code.
 - **Common Mistakes article** — the anti-patterns from the module spec, shown as ❌/✅ compilable pairs.
 
-**Umbrella catalog** (`Sources/BlurSecurity/BlurSecurity.docc/`):
+**Umbrella catalog** (`Sources/BolourSecurity/BolourSecurity.docc/`):
 
-- "Meet BlurSecurity" landing page and module directory.
-- **Tutorials** (DocC interactive tutorials, Xcode-style): *Store Your First Secret* (BlurKeychain, 5 minutes), *Build a Biometric Vault* (SecureNotes walkthrough), *Ship Pinned Networking*, *Sign In with OAuth + PKCE*, *Prove Your App Is Real* (App Attest end-to-end including the server side).
-- **Cross-cutting articles:** *Choosing a Storage Home* (Keychain vs TokenStore vs Vault decision tree), *Should You Pin?*, *The Threat Models BlurSecurity Addresses*, *Adopting BlurSecurity in a Regulated Industry* (what to show your auditor), *Migrating from Raw Security.framework*, *Migrating from KeychainAccess/Valet*.
+- "Meet BolourSecurity" landing page and module directory.
+- **Tutorials** (DocC interactive tutorials, Xcode-style): *Store Your First Secret* (BolourKeychain, 5 minutes), *Build a Biometric Vault* (SecureNotes walkthrough), *Ship Pinned Networking*, *Sign In with OAuth + PKCE*, *Prove Your App Is Real* (App Attest end-to-end including the server side).
+- **Cross-cutting articles:** *Choosing a Storage Home* (Keychain vs TokenStore vs Vault decision tree), *Should You Pin?*, *The Threat Models BolourSecurity Addresses*, *Adopting BolourSecurity in a Regulated Industry* (what to show your auditor), *Migrating from Raw Security.framework*, *Migrating from KeychainAccess/Valet*.
 
-**Repository docs** (`docs/`) — architecture, ADRs, strategy: for contributors and evaluators, not end users. The split is deliberate: DocC teaches *using* BlurSecurity; `docs/` explains *why it is the way it is*.
+**Repository docs** (`docs/`) — architecture, ADRs, strategy: for contributors and evaluators, not end users. The split is deliberate: DocC teaches *using* BolourSecurity; `docs/` explains *why it is the way it is*.
 
 ## 2. Voice and Standards
 

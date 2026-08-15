@@ -1,6 +1,6 @@
 # Release Strategy
 
-BlurSecurity releases are boring by design: strictly semantic, humanly reviewed, cryptographically signed, and documented before they ship. Trust compounds through uneventful releases.
+BolourSecurity releases are boring by design: strictly semantic, humanly reviewed, cryptographically signed, and documented before they ship. Trust compounds through uneventful releases.
 
 ## 1. Semantic Versioning — with a security framework's teeth
 

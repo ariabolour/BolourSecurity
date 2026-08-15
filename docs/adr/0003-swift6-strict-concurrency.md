@@ -7,7 +7,7 @@
 
 ## Context
 
-BlurSecurity launches in the Swift 6 era. Security code is exactly where data races do the most damage: a torn read of an authentication flag, a key cache mutated from two tasks, a token refresh raced by concurrent requests producing two live refresh tokens (and, with rotation-detecting servers, a forced logout or session hijack window). We can adopt Swift 6 language mode with `StrictConcurrency=complete` from day one, or start in Swift 5 mode and migrate.
+BolourSecurity launches in the Swift 6 era. Security code is exactly where data races do the most damage: a torn read of an authentication flag, a key cache mutated from two tasks, a token refresh raced by concurrent requests producing two live refresh tokens (and, with rotation-detecting servers, a forced logout or session hijack window). We can adopt Swift 6 language mode with `StrictConcurrency=complete` from day one, or start in Swift 5 mode and migrate.
 
 Greenfield status makes this decision cheap now and expensive later.
 

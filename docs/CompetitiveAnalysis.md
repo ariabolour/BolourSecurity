@@ -1,6 +1,6 @@
 # Competitive Analysis
 
-An honest map of the field as of mid-2026. We respect these projects — several pioneered the space — and we name precisely the gap BlurSecurity fills: **no one offers a coherent, Swift-6-native, zero-dependency security platform across the full surface.** Everything below is a point solution, a port, or unmaintained.
+An honest map of the field as of mid-2026. We respect these projects — several pioneered the space — and we name precisely the gap BolourSecurity fills: **no one offers a coherent, Swift-6-native, zero-dependency security platform across the full surface.** Everything below is a point solution, a port, or unmaintained.
 
 ## Keychain Wrappers
 
@@ -20,7 +20,7 @@ An honest map of the field as of mid-2026. We respect these projects — several
 
 ## Identity & Tokens
 
-**AppAuth-iOS (OpenID Foundation)** — the reference OAuth/OIDC client; certified, battle-tested. Gaps: Objective-C core with Java lineage (delegates, builders); token *storage is left to the app* — the most dangerous omission in practice; no PKCE-mandatory posture (configurable correctness). BlurOAuth's pitch against it: certified-grade protocol behavior *plus* custody, refresh single-flight, and Swift-6 API in one coherent unit.
+**AppAuth-iOS (OpenID Foundation)** — the reference OAuth/OIDC client; certified, battle-tested. Gaps: Objective-C core with Java lineage (delegates, builders); token *storage is left to the app* — the most dangerous omission in practice; no PKCE-mandatory posture (configurable correctness). BolourOAuth's pitch against it: certified-grade protocol behavior *plus* custody, refresh single-flight, and Swift-6 API in one coherent unit.
 
 **JOSESwift (Airside)** — solid JOSE implementation. Gaps: verification correctness is caller-assembled (algorithm choice, claims validation are the caller's job — exactly the historical vulnerability surface), no typed unverified/verified boundary, no first-class SE signing. 
 
@@ -32,19 +32,19 @@ An honest map of the field as of mid-2026. We respect these projects — several
 
 ## App Integrity
 
-No meaningful open-source wrapper exists for App Attest/DeviceCheck with lifecycle management — teams hand-roll the state machine against Apple's docs, and the common bugs (attest-once-forever, client-minted challenges) are visible in public code. `BlurAppIntegrity` has effectively no incumbent: **greenfield category.**
+No meaningful open-source wrapper exists for App Attest/DeviceCheck with lifecycle management — teams hand-roll the state machine against Apple's docs, and the common bugs (attest-once-forever, client-minted challenges) are visible in public code. `BolourAppIntegrity` has effectively no incumbent: **greenfield category.**
 
 ## The Standing Gap = Our Thesis
 
-| Need | Incumbent answer | BlurSecurity answer |
+| Need | Incumbent answer | BolourSecurity answer |
 |---|---|---|
-| Keychain | KeychainAccess/Valet (point solutions) | BlurKeychain, composing with everything below |
-| Crypto w/ hardware | Raw CryptoKit (finding SE is on you) | BlurCrypto, SE-first (ADR-0006) |
-| Biometrics | Raw LAContext | BlurBiometrics (capability-typed results) |
-| Pinning | TrustKit (ObjC, configurable fail modes) | BlurCertificates + BlurNetworkSecurity (fail-closed by type) |
-| JWT | JOSESwift (assembly required) | BlurJWT (misuse unrepresentable) |
-| OAuth + custody | AppAuth + "storage is your problem" | BlurOAuth + TokenStore, one unit |
-| App integrity | Nothing | BlurAppIntegrity |
+| Keychain | KeychainAccess/Valet (point solutions) | BolourKeychain, composing with everything below |
+| Crypto w/ hardware | Raw CryptoKit (finding SE is on you) | BolourCrypto, SE-first (ADR-0006) |
+| Biometrics | Raw LAContext | BolourBiometrics (capability-typed results) |
+| Pinning | TrustKit (ObjC, configurable fail modes) | BolourCertificates + BolourNetworkSecurity (fail-closed by type) |
+| JWT | JOSESwift (assembly required) | BolourJWT (misuse unrepresentable) |
+| OAuth + custody | AppAuth + "storage is your problem" | BolourOAuth + TokenStore, one unit |
+| App integrity | Nothing | BolourAppIntegrity |
 | **All of it, coherently** | **Nobody** | **The platform** |
 
 The compound advantage is the ecosystem: every module strengthens the others (OAuth stores through SecureStorage, verifies through JWT, connects through NetworkSecurity, attests through AppIntegrity — sharing Core's vocabulary). Point solutions cannot match this without becoming us.

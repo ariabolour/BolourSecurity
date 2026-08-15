@@ -1,6 +1,6 @@
 # Long-Term Maintenance Strategy
 
-Security infrastructure is judged in year five, not week one. This document defines how BlurSecurity stays correct, current, and maintained on a decade horizon — the plan for being the opposite of the unmaintained wrapper our [CompetitiveAnalysis](CompetitiveAnalysis.md) warns about.
+Security infrastructure is judged in year five, not week one. This document defines how BolourSecurity stays correct, current, and maintained on a decade horizon — the plan for being the opposite of the unmaintained wrapper our [CompetitiveAnalysis](CompetitiveAnalysis.md) warns about.
 
 ## 1. The Annual OS Cycle (the heartbeat)
 

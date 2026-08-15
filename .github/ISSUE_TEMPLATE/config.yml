@@ -1,15 +1,15 @@
 blank_issues_enabled: false
 contact_links:
   - name: 🔒 Report a security vulnerability (private)
-    url: https://github.com/OWNER/BlurSecurity/security/advisories/new
+    url: https://github.com/OWNER/BolourSecurity/security/advisories/new
     about: >-
       NEVER report vulnerabilities as public issues. Use private security
       advisories — see SECURITY.md for our response commitments.
   - name: 💡 Propose or discuss API design
-    url: https://github.com/OWNER/BlurSecurity/discussions/categories/api-design
+    url: https://github.com/OWNER/BolourSecurity/discussions/categories/api-design
     about: >-
       New public API starts as a discussion showing the proposed call sites,
       before any implementation. See CONTRIBUTING.md.
   - name: ❓ Questions & help
-    url: https://github.com/OWNER/BlurSecurity/discussions/categories/q-a
+    url: https://github.com/OWNER/BolourSecurity/discussions/categories/q-a
     about: Usage questions belong in Discussions, where answers help everyone.

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Generates the checked-in test fixtures for BlurNetworkSecurityTests' in-process TLS harness.
-# Separate root/leaf from BlurCertificatesTests' fixtures — this pair needs a *server identity*
+# Generates the checked-in test fixtures for BolourNetworkSecurityTests' in-process TLS harness.
+# Separate root/leaf from BolourCertificatesTests' fixtures — this pair needs a *server identity*
 # (cert + private key, exported as PKCS12) so an in-process Network.framework listener can
 # actually terminate TLS, not just DER bytes for offline parsing.
 # Requires OpenSSL 3.x. Re-run to regenerate (changing keys changes pins — update
@@ -8,7 +8,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-OUT="$ROOT_DIR/Tests/BlurNetworkSecurityTests/Fixtures"
+OUT="$ROOT_DIR/Tests/BolourNetworkSecurityTests/Fixtures"
 W="$(mktemp -d)"
 trap 'rm -rf "$W"' EXIT
 mkdir -p "$OUT"
@@ -21,7 +21,7 @@ newkey() { openssl ecparam -name prime256v1 -genkey -noout -out "$1"; }
 newkey "$W/root.key"
 openssl req -x509 -new -key "$W/root.key" -out "$W/root.pem" \
   -not_before 20200101000000Z -not_after 20500101000000Z \
-  -subj "/O=BlurSecurity/CN=BlurNetworkSecurity Test Root" \
+  -subj "/O=BolourSecurity/CN=BolourNetworkSecurity Test Root" \
   -addext "basicConstraints=critical,CA:TRUE" \
   -addext "keyUsage=critical,keyCertSign,cRLSign"
 
@@ -35,7 +35,7 @@ extendedKeyUsage=serverAuth
 EXT
 # notBefore predates 2019-07-01 so the >398-day leaf-validity rule (Apple rejects longer-lived
 # leaves issued after 2020-09-01 as "not standards compliant") does not apply; see
-# scripts/generate-test-cas.sh for the same gotcha, hit first in BlurCertificatesTests.
+# scripts/generate-test-cas.sh for the same gotcha, hit first in BolourCertificatesTests.
 openssl x509 -req -in "$W/leaf.csr" -CA "$W/root.pem" -CAkey "$W/root.key" -CAcreateserial \
   -not_before 20190101000000Z -not_after 20500101000000Z -extfile "$W/leaf.ext" -out "$W/leaf.pem" 2>/dev/null
 
@@ -50,7 +50,7 @@ openssl x509 -in "$W/root.pem" -outform der -out "$OUT/root.der"
 openssl x509 -in "$W/leaf.pem" -outform der -out "$OUT/leaf.der"
 
 # A decoy certificate — never served, just a second unrelated key so tests have a plausible
-# "wrong" SPKI pin without depending on BlurCertificatesTests' fixtures across target boundaries.
+# "wrong" SPKI pin without depending on BolourCertificatesTests' fixtures across target boundaries.
 newkey "$W/decoy.key"
 openssl req -x509 -new -key "$W/decoy.key" -out "$W/decoy.pem" \
   -not_before 20200101000000Z -not_after 20500101000000Z \

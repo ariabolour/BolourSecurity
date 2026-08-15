@@ -11,13 +11,13 @@ ROADMAP.md recorded the intent from the project's earliest planning ("license fi
 
 ## Decision
 
-**BlurSecurity is licensed under the Apache License, Version 2.0.** The `LICENSE` file at the repository root carries the full text; every module inherits it from the single root license (no per-module licensing).
+**BolourSecurity is licensed under the Apache License, Version 2.0.** The `LICENSE` file at the repository root carries the full text; every module inherits it from the single root license (no per-module licensing).
 
 ## Alternatives Considered
 
 - **MIT.** Simpler and equally permissive for use/modification/redistribution, but carries no explicit patent grant or termination-on-litigation clause. For a library whose entire purpose is closing off security vulnerability classes, leaving patent terms silent is a gap enterprise legal review would flag — exactly the audience ROADMAP.md named. Rejected.
 - **BSD-3-Clause.** Same patent-silence gap as MIT, plus a non-endorsement clause with no meaningful benefit here over Apache-2.0's own trademark section (§6). Rejected.
-- **Dual-license / source-available.** Would fund maintenance more directly but directly contradicts VISION.md and MANIFESTO.md's framing of BlurSecurity as open infrastructure adopted for its security properties, not a commercial product — the trust model depends on the code being freely auditable and forkable. Rejected without a stronger reason to reopen it.
+- **Dual-license / source-available.** Would fund maintenance more directly but directly contradicts VISION.md and MANIFESTO.md's framing of BolourSecurity as open infrastructure adopted for its security properties, not a commercial product — the trust model depends on the code being freely auditable and forkable. Rejected without a stronger reason to reopen it.
 
 ## Consequences
 

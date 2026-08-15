@@ -11,24 +11,24 @@ body:
     attributes:
       label: Module
       options:
-        - BlurSecurityCore
-        - BlurCrypto
-        - BlurKeychain
-        - BlurBiometrics
-        - BlurCertificates
-        - BlurSecureStorage
-        - BlurNetworkSecurity
-        - BlurJWT
-        - BlurAppIntegrity
-        - BlurOAuth
-        - BlurSecurity (umbrella)
+        - BolourSecurityCore
+        - BolourCrypto
+        - BolourKeychain
+        - BolourBiometrics
+        - BolourCertificates
+        - BolourSecureStorage
+        - BolourNetworkSecurity
+        - BolourJWT
+        - BolourAppIntegrity
+        - BolourOAuth
+        - BolourSecurity (umbrella)
         - Not sure
     validations:
       required: true
   - type: input
     id: version
     attributes:
-      label: BlurSecurity version
+      label: BolourSecurity version
       placeholder: "e.g. 0.5.1, or a commit SHA"
     validations:
       required: true

@@ -5,7 +5,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Before filing: check the relevant [module spec](../../tree/main/docs/modules) — many "missing" features are documented deliberate omissions (e.g. unauthenticated ciphers, single-pin policies), and [Architecture §9](../../blob/main/docs/Architecture.md) lists what BlurSecurity deliberately does not do.
+        Before filing: check the relevant [module spec](../../tree/main/docs/modules) — many "missing" features are documented deliberate omissions (e.g. unauthenticated ciphers, single-pin policies), and [Architecture §9](../../blob/main/docs/Architecture.md) lists what BolourSecurity deliberately does not do.
   - type: textarea
     id: problem
     attributes:
@@ -19,16 +19,16 @@ body:
       label: Which module does this belong to?
       description: If the honest answer is "a new module" or "none of them," say so below — that's an ADR-level conversation and it's welcome.
       options:
-        - BlurSecurityCore
-        - BlurCrypto
-        - BlurKeychain
-        - BlurBiometrics
-        - BlurCertificates
-        - BlurSecureStorage
-        - BlurNetworkSecurity
-        - BlurJWT
-        - BlurAppIntegrity
-        - BlurOAuth
+        - BolourSecurityCore
+        - BolourCrypto
+        - BolourKeychain
+        - BolourBiometrics
+        - BolourCertificates
+        - BolourSecureStorage
+        - BolourNetworkSecurity
+        - BolourJWT
+        - BolourAppIntegrity
+        - BolourOAuth
         - A new module / unsure
     validations:
       required: true

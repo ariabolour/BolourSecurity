@@ -7,7 +7,7 @@ The package should be enjoyable. DX is not polish applied at the end; it is a de
 The adoption funnel is designed end to end:
 
 1. README shows a real, complete, three-line win (store a secret) above the fold.
-2. `Package.swift` add → `import BlurKeychain` → autocomplete carries the developer: `Keychain(` shows a zero-argument path; `store(` reads as a sentence; nothing requires reading docs to be *correct* (docs exist to make you *informed*).
+2. `Package.swift` add → `import BolourKeychain` → autocomplete carries the developer: `Keychain(` shows a zero-argument path; `store(` reads as a sentence; nothing requires reading docs to be *correct* (docs exist to make you *informed*).
 3. The *Store Your First Secret* tutorial confirms what just happened and — critically — explains the security properties the developer already got for free. The "you did it right by accident" moment is the brand promise made tangible.
 
 ## 2. Autocomplete as a UX Surface
@@ -32,8 +32,8 @@ Errors follow a house format enforced in review ([ADR-0004](adr/0004-typed-throw
 
 Two example apps ship in-repo and are built in CI (they cannot rot):
 
-- **SecureNotes** — local-first: `Vault` + `BlurBiometrics` + `BlurKeychain`. The "protect data on this device" story.
-- **SignInDemo** — service-connected: `BlurOAuth` + `BlurJWT` + `BlurNetworkSecurity` + `BlurAppIntegrity`, against a tiny bundled mock server. The "prove and connect" story.
+- **SecureNotes** — local-first: `Vault` + `BolourBiometrics` + `BolourKeychain`. The "protect data on this device" story.
+- **SignInDemo** — service-connected: `BolourOAuth` + `BolourJWT` + `BolourNetworkSecurity` + `BolourAppIntegrity`, against a tiny bundled mock server. The "prove and connect" story.
 
 Example code is held to production standard — people ship what they paste. Each screen links (comment header) to the tutorial section it embodies.
 

@@ -33,7 +33,7 @@ Typed throws, strict concurrency put us at the modern edge at launch; the risk i
 Mitigations: this documentation set *is* the primary mitigation — architecture, rationale, and process live in the repo, not in heads; contributor ladder with deliberate committer cultivation ([GOVERNANCE](../GOVERNANCE.md)); everything release-critical runs in CI, not on laptops; explicit succession clause in GOVERNANCE.
 
 **R9 — Scope creep.** Security touches everything; "just add jailbreak detection / analytics / UI" pressure is constant. *Likelihood: high. Impact: erosion of the one-responsibility architecture and of trust (jailbreak detection especially invites the checkbox-security dynamic).*
-Mitigations: "What BlurSecurity Deliberately Does Not Do" ([Architecture §9](Architecture.md)) as the standing answer; new-module bar requires an ADR; the deleted-BlurUtilities precedent ([ADR-0005](adr/0005-consolidated-module-set.md)).
+Mitigations: "What BolourSecurity Deliberately Does Not Do" ([Architecture §9](Architecture.md)) as the standing answer; new-module bar requires an ADR; the deleted-BolourUtilities precedent ([ADR-0005](adr/0005-consolidated-module-set.md)).
 
 **R10 — Trust is slow; adoption stalls pre-1.0.** *Likelihood: moderate. Impact: motivational/sustainability.*
 Mitigations: the wedge strategy (single-module adoption, migration helpers — [AdoptionStrategy](AdoptionStrategy.md)); regulated-industry focus where the pain is sharpest; patience as policy — the [VISION](../VISION.md) five-year arc budgets for slow compounding, and "never optimize for speed" applies to growth too.

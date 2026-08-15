@@ -31,7 +31,7 @@ public protocol SecurityError: Error, LocalizedError,
 ## Alternatives Considered
 
 - **Untyped `throws` everywhere (pre-Swift-6 convention).** Familiar, but discoverable failure handling dies: autocomplete can't show what to catch, exhaustiveness is impossible, and the "one generic catch" anti-pattern wins. Rejected.
-- **One giant `BlurSecurityError` enum.** Exhaustive but violates composability (importing `BlurKeychain` would surface OAuth cases) and turns every new case anywhere into ecosystem-wide noise. Rejected.
+- **One giant `BolourSecurityError` enum.** Exhaustive but violates composability (importing `BolourKeychain` would surface OAuth cases) and turns every new case anywhere into ecosystem-wide noise. Rejected.
 - **`Result`-returning APIs.** Composes poorly with `async` call sites and doubles the API shapes. Rejected; `Result` appears only where a value legitimately *stores* an outcome.
 
 ## Consequences

@@ -1,4 +1,4 @@
-# The BlurSecurity Manifesto
+# The BolourSecurity Manifesto
 
 We build the security layer every Apple app deserves and almost none has.
 
@@ -6,7 +6,7 @@ We believe security failures in apps are rarely failures of intent. They are fai
 
 So we hold these positions, and we design every line of public API against them.
 
-## The Ten Laws of BlurSecurity
+## The Ten Laws of BolourSecurity
 
 ### 1. The default is the most secure option.
 Every parameter with a default value defaults to the strongest reasonable setting. Keychain items are device-only and unlocked-only until a developer says otherwise. Ciphers are authenticated. Pinning fails closed. If a developer configures nothing, they get our best.
@@ -24,10 +24,10 @@ We hide `CFDictionary`, `OSStatus`, `SecAccessControlCreateWithFlags`. We never 
 Every error explains what failed, why it likely failed, and what to do next — without ever including secret material. An error message is a tiny piece of documentation delivered at the exact moment of need.
 
 ### 6. No dependencies, no exceptions.
-BlurSecurity depends on Apple's SDKs and the Swift standard library. Nothing else, ever. Our supply chain is Apple's supply chain.
+BolourSecurity depends on Apple's SDKs and the Swift standard library. Nothing else, ever. Our supply chain is Apple's supply chain.
 
 ### 7. We do not invent cryptography.
-Every primitive is Apple's: CryptoKit, Security.framework, LocalAuthentication, the Secure Enclave. BlurSecurity's contribution is *composition and API design*, not novel crypto. When Apple provides no primitive, we say so rather than improvise one.
+Every primitive is Apple's: CryptoKit, Security.framework, LocalAuthentication, the Secure Enclave. BolourSecurity's contribution is *composition and API design*, not novel crypto. When Apple provides no primitive, we say so rather than improvise one.
 
 ### 8. Documentation is part of the API.
 An undocumented public symbol is a build failure. Every module ships DocC with tutorials, security considerations, and the mistakes it prevents. If we can't explain an API simply, the API is wrong.
