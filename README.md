@@ -53,7 +53,7 @@ let header = try await session.tokens.validAccessToken().headerValue  // single-
 | [`BolourKeychain`](docs/modules/BolourKeychain.md) | The keychain as it should have been |
 | [`BolourBiometrics`](docs/modules/BolourBiometrics.md) | Face ID, Touch ID, Optic ID as one coherent policy API |
 | [`BolourCertificates`](docs/modules/BolourCertificates.md) | X.509, trust evaluation, pinning policies that can't fail open |
-| [`BolourSecureStorage`](docs/modules/BolourSecureStorage.md) | Encrypted vaults and token custody with a hardware-backed key hierarchy |
+| [`BolourSecureStorage`](docs/modules/BolourSecureStorage.md) | Encrypted vaults and token custody — hardware-backed master key is the design target, not yet shipped |
 | [`BolourNetworkSecurity`](docs/modules/BolourNetworkSecurity.md) | Pinning and TLS policy enforced in URLSession, fail-closed |
 | [`BolourJWT`](docs/modules/BolourJWT.md) | JOSE with the vulnerability catalog made unrepresentable |
 | [`BolourAppIntegrity`](docs/modules/BolourAppIntegrity.md) | App Attest + DeviceCheck as one managed lifecycle |
@@ -64,15 +64,15 @@ let header = try await session.tokens.validAccessToken().headerValue  // single-
 
 ## Module Maturity
 
-Not every module carries the same weight of scrutiny. "Stable Candidate" describes design maturity and API-surface stability under active internal review — not a stability *promise*; per [SemVer](https://semver.org), nothing is API-stable pre-1.0.0, and no module below has had independent security review or real-device test execution yet (see [Integration Testing](docs/IntegrationTesting.md) and the [1.0 gate](ROADMAP.md#whats-required-before-100)).
+Not every module carries the same weight of scrutiny. "Stable Candidate" means: the maintainer would be comfortable freezing this API soon — not merely that the implementation reads clean. It is not a stability *promise*; per [SemVer](https://semver.org), nothing is API-stable pre-1.0.0, and no module below has had independent security review yet (see the [1.0 gate](ROADMAP.md#whats-required-before-100)).
 
 | Module | Maturity | Why |
 |---|---|---|
-| `BolourSecurityCore` | Stable Candidate | Foundational vocabulary every other module depends on; smallest, most-reviewed surface |
-| `BolourKeychain` | Stable Candidate | Thin, well-understood mapping over a single Apple API (`SecItem*`) |
-| `BolourBiometrics` | Stable Candidate | Thin mapping over `LAContext`; policy surface is small |
-| `BolourCrypto` | Stable Candidate | Composes CryptoKit/Security primitives directly; no invented cryptography |
-| `BolourSecureStorage` | Stable Candidate | Built directly on the above four; master-key handling is the one open item (see [Known limitations](CHANGELOG.md#known-limitations)) |
+| `BolourSecurityCore` | Stable Candidate | Foundational vocabulary every other module depends on; smallest, most-reviewed surface; no hardware dependency at all, so nothing here is blocked on device testing |
+| `BolourKeychain` | Stable Candidate | Thin, well-understood mapping over a single Apple API (`SecItem*`); has real (if not yet CI-executed) hardware round-trip tests — see [Integration Testing](docs/IntegrationTesting.md) |
+| `BolourCrypto` | Stable Candidate | Composes CryptoKit/Security primitives directly, no invented cryptography; its Secure Enclave path also has real hardware round-trip tests, same tier as Keychain |
+| `BolourBiometrics` | Beta | Thin mapping over `LAContext` with a small policy surface, but **zero automated real-biometric-hardware test coverage exists at all** — not gated, genuinely absent (see [Integration Testing](docs/IntegrationTesting.md)). Three watchOS-specific compile failures in this exact module went unnoticed until a real CI run caught them, which is itself evidence this isn't freeze-ready yet |
+| `BolourSecureStorage` | Beta | The vault's master key is documented (README, module doc, ADR-0006) as intended to be Secure Enclave-wrapped — it is currently software-held in the keychain instead, a real gap between design and delivery, not just an open task. Stays Beta until that's closed *and* every doc referencing it agrees with the code |
 | `BolourCertificates` | Beta | Custom DER/X.509 parsing is inherently higher-risk code; trust decisions are delegated to `SecTrust`, but the parser itself needs more adversarial-input hardening before "stable" |
 | `BolourNetworkSecurity` | Beta | Depends on Certificates' maturity; TLS-floor enforcement has one documented structural gap (see module doc) |
 | `BolourJWT` | Beta | Correct on direct audit (algorithm confusion, `alg: none` structurally unreachable), but JOSE parsing is adversarial-input-facing and wants more fuzzing before "stable" |
