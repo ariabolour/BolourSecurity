@@ -69,7 +69,7 @@ public struct BiometricAuthenticator: Sendable {
 
         logger?.log(.authenticationSucceeded)
         return AuthenticatedContext(
-            method: .inferring(biometryType: probe.biometryType, policy: policy),
+            method: .inferring(biometryKind: probe.biometryKind, policy: policy),
             evaluator: evaluator,
             authenticatedAt: ContinuousClock().now
         )
@@ -79,15 +79,15 @@ public struct BiometricAuthenticator: Sendable {
 extension AuthenticationMethod {
     /// LocalAuthentication doesn't report which mechanism satisfied a policy, only that one did
     /// — see the honest-limits note on ``AuthenticationMethod`` itself.
-    fileprivate static func inferring(biometryType: LABiometryType, policy: AuthenticationPolicy) -> AuthenticationMethod {
-        if case .userPresence = policy, biometryType == .none {
+    fileprivate static func inferring(biometryKind: BiometryKind?, policy: AuthenticationPolicy) -> AuthenticationMethod {
+        if case .userPresence = policy, biometryKind == nil {
             return .watch
         }
-        switch biometryType {
+        switch biometryKind {
         case .faceID: return .faceID
         case .touchID: return .touchID
         case .opticID: return .opticID
-        default: return .passcode
+        case nil: return .passcode
         }
     }
 }

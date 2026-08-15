@@ -19,10 +19,10 @@ public enum BiometryAvailability: Sendable, Hashable {
     /// verdict. A pure function so every branch is a table-driven unit test with no `LAContext`
     /// involved.
     static func folding(biometricProbe: PolicyAvailability, passcodeProbe: PolicyAvailability) -> BiometryAvailability {
-        if biometricProbe.canEvaluate, let kind = BiometryKind(biometricProbe.biometryType) {
+        if biometricProbe.canEvaluate, let kind = biometricProbe.biometryKind {
             return .available(kind)
         }
-        if let code = biometricProbe.error, let kind = BiometryKind(biometricProbe.biometryType) {
+        if let code = biometricProbe.error, let kind = biometricProbe.biometryKind {
             switch code {
             case .biometryNotEnrolled: return .notEnrolled(kind)
             case .biometryLockout: return .lockedOut(kind)

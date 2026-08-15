@@ -22,7 +22,7 @@ final class FakePolicyEvaluating: PolicyEvaluating, @unchecked Sendable {
     var invalidateCalled: Bool { lock.lock(); defer { lock.unlock() }; return _invalidateCalled }
 
     init(
-        canEvaluateResult: PolicyAvailability = PolicyAvailability(canEvaluate: true, error: nil, biometryType: .faceID),
+        canEvaluateResult: PolicyAvailability = PolicyAvailability(canEvaluate: true, error: nil, biometryKind: .faceID),
         evaluateSuccess: Bool = true,
         evaluateError: Error? = nil,
         domainState: Data? = nil

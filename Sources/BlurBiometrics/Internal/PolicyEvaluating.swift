@@ -1,10 +1,16 @@
 import LocalAuthentication
 
 /// The result of a non-prompting `canEvaluatePolicy` probe.
+///
+/// Carries `BiometryKind?` rather than `LABiometryType` directly: the latter is
+/// `@available(watchOS 11.0, *)`, and Apple Watch has no Face ID/Touch ID/Optic ID hardware at
+/// any OS version regardless — resolving to our own always-available type at the one real
+/// `LAContext` boundary (`LAContextEvaluator`) keeps that version gate from spreading through
+/// every downstream consumer.
 struct PolicyAvailability: Sendable {
     let canEvaluate: Bool
     let error: LAError.Code?
-    let biometryType: LABiometryType
+    let biometryKind: BiometryKind?
 }
 
 /// An internal seam around `LAContext`, so `BiometricAuthenticator` can be driven by a scripted

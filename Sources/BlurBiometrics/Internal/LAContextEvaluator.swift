@@ -16,7 +16,20 @@ final class LAContextEvaluator: PolicyEvaluating, @unchecked Sendable {
         var nsError: NSError?
         let canEvaluate = context.canEvaluatePolicy(policy, error: &nsError)
         let code = nsError.flatMap { LAError.Code(rawValue: $0.code) }
-        return PolicyAvailability(canEvaluate: canEvaluate, error: code, biometryType: context.biometryType)
+        return PolicyAvailability(canEvaluate: canEvaluate, error: code, biometryKind: resolvedBiometryKind())
+    }
+
+    /// The one place `LABiometryType` (`@available(watchOS 11.0, *)`) is actually touched.
+    /// Pre-11 watchOS has no queryable biometry type — and no biometric hardware to report
+    /// either way — so it resolves to `nil` (no biometric modality) rather than gating this
+    /// entire module's minimum watchOS version up for every other target in the package.
+    private func resolvedBiometryKind() -> BiometryKind? {
+        #if os(watchOS)
+        guard #available(watchOS 11.0, *) else { return nil }
+        return BiometryKind(context.biometryType)
+        #else
+        return BiometryKind(context.biometryType)
+        #endif
     }
 
     func evaluatePolicy(_ policy: LAPolicy, localizedReason: String, reply: @escaping @Sendable (Bool, (any Error)?) -> Void) {

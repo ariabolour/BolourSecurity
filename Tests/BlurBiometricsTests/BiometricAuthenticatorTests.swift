@@ -8,7 +8,7 @@ struct BiometricAuthenticatorTests {
     @Test("a successful evaluation yields an AuthenticatedContext with the inferred method")
     func success() async throws {
         let evaluator = FakePolicyEvaluating(
-            canEvaluateResult: PolicyAvailability(canEvaluate: true, error: nil, biometryType: .faceID),
+            canEvaluateResult: PolicyAvailability(canEvaluate: true, error: nil, biometryKind: .faceID),
             evaluateSuccess: true
         )
         let authenticator = BiometricAuthenticator(logger: nil, makeEvaluator: { evaluator })
@@ -20,7 +20,7 @@ struct BiometricAuthenticatorTests {
     @Test("canEvaluatePolicy failing throws before any prompt is attempted")
     func canEvaluateFailureThrowsWithoutPrompting() async {
         let evaluator = FakePolicyEvaluating(
-            canEvaluateResult: PolicyAvailability(canEvaluate: false, error: .biometryNotEnrolled, biometryType: .faceID)
+            canEvaluateResult: PolicyAvailability(canEvaluate: false, error: .biometryNotEnrolled, biometryKind: .faceID)
         )
         let authenticator = BiometricAuthenticator(logger: nil, makeEvaluator: { evaluator })
         await #expect(throws: BiometricError.biometryNotEnrolled) {
@@ -80,7 +80,7 @@ struct BiometricAuthenticatorTests {
     @Test("availability() wires canEvaluatePolicy results through the folding logic")
     func availabilityWiring() {
         let evaluator = FakePolicyEvaluating(
-            canEvaluateResult: PolicyAvailability(canEvaluate: true, error: nil, biometryType: .touchID)
+            canEvaluateResult: PolicyAvailability(canEvaluate: true, error: nil, biometryKind: .touchID)
         )
         let authenticator = BiometricAuthenticator(logger: nil, makeEvaluator: { evaluator })
         #expect(authenticator.availability() == .available(.touchID))

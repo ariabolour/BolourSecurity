@@ -7,6 +7,7 @@ public enum BiometryKind: Sendable, Hashable {
     case opticID
 
     /// `nil` for `.none` (no biometric hardware) or any future type this package doesn't know about.
+    @available(watchOS 11.0, *)
     init?(_ type: LABiometryType) {
         switch type {
         case .faceID: self = .faceID

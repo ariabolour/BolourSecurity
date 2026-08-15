@@ -233,7 +233,24 @@ public actor Vault {
     }
 
     private static func applyProtection(_ protection: FileProtectionType, to url: URL) throws {
-        try FileManager.default.setAttributes([.protectionKey: protection], ofItemAtPath: url.path)
+        do {
+            try FileManager.default.setAttributes([.protectionKey: protection], ofItemAtPath: url.path)
+        } catch {
+            #if os(macOS)
+            let underlying = (error as NSError).userInfo[NSUnderlyingErrorKey] as? NSError
+            if underlying?.domain == NSPOSIXErrorDomain, underlying?.code == Int(EINVAL) {
+                // Data Protection classes are an iOS-family feature; macOS support depends on
+                // volume/FileVault configuration and is simply absent on many Macs — including
+                // this package's own CI runners. Failing here would make Vault unusable on
+                // those machines even though the actual confidentiality boundary is the
+                // AES-GCM sealing applied to every artifact, not this OS attribute. Best-effort
+                // only on macOS, and only for this specific "unsupported here" failure — every
+                // other platform, and every other error, still fails closed.
+                return
+            }
+            #endif
+            throw error
+        }
     }
 
     private static func loadOrCreateMasterKey(
