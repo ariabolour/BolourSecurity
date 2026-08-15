@@ -9,15 +9,31 @@ import BlurCertificates
 enum NetworkFixtures {
     static let pkcs12Passphrase = "blursecurity-test-fixture"
 
+    /// Swift Testing runs tests in parallel by default, and every test that stands up a
+    /// `LocalTLSServer` calls `serverIdentity()` — without this, two concurrent calls can both
+    /// pass the "nothing to delete" check and then both call `SecPKCS12Import`, racing each
+    /// other into a duplicate-item collision. The delete-then-import sequence below needs to run
+    /// as one atomic unit, not just be idempotent per call.
+    private static let importLock = NSLock()
+
     private static func url(_ name: String, _ ext: String) -> URL {
         Bundle.module.url(forResource: name, withExtension: ext, subdirectory: "Fixtures")!
     }
 
-    /// The `SecIdentity` (cert + private key) the local TLS harness serves. Imported straight
-    /// from PKCS12 bytes in memory — never touches the persistent keychain, so it needs no
-    /// entitlement and leaves no state behind.
+    /// The `SecIdentity` (cert + private key) the local TLS harness serves.
+    ///
+    /// - Note: On iOS, `SecPKCS12Import` is memory-only. On **macOS**, Apple documents that it
+    ///   always imports into the default keychain as a side effect — leaf (as an identity: cert
+    ///   + key) and root (as a bare certificate, bundled into the PKCS12 via `-certfile` so
+    ///   `TrustEvaluator`'s anchor set has it) alike. Importing the same fixture more than once
+    ///   per process (once per test that stands up a `LocalTLSServer`) collides with the earlier
+    ///   import (`errSecDuplicateItem`). Clearing any prior copy of both first makes the call
+    ///   idempotent regardless of call count or which keychain the runner treats as default.
     static func serverIdentity() throws -> SecIdentity {
+        importLock.lock()
+        defer { importLock.unlock() }
         let data = try Data(contentsOf: url("server-identity", "p12"))
+        try deleteAnyPreviouslyImportedFixtureItems()
         let options: [String: Any] = [kSecImportExportPassphrase as String: pkcs12Passphrase]
         var rawItems: CFArray?
         let status = SecPKCS12Import(data as CFData, options as CFDictionary, &rawItems)
@@ -29,6 +45,43 @@ enum NetworkFixtures {
         }
         // swiftlint:disable:next force_cast
         return (identity as! SecIdentity)
+    }
+
+    private static func deleteAnyPreviouslyImportedFixtureItems() throws {
+        let leafData = try Data(contentsOf: url("leaf", "der"))
+        let rootData = try Data(contentsOf: url("root", "der"))
+
+        let identityQuery: [String: Any] = [
+            kSecClass as String: kSecClassIdentity,
+            kSecMatchLimit as String: kSecMatchLimitAll,
+            kSecReturnRef as String: true,
+        ]
+        var identityResult: CFTypeRef?
+        if SecItemCopyMatching(identityQuery as CFDictionary, &identityResult) == errSecSuccess,
+           let identities = identityResult as? [SecIdentity] {
+            for identity in identities {
+                var certificate: SecCertificate?
+                guard SecIdentityCopyCertificate(identity, &certificate) == errSecSuccess,
+                      let certificate, (SecCertificateCopyData(certificate) as Data) == leafData
+                else { continue }
+                SecItemDelete([kSecClass as String: kSecClassIdentity, kSecValueRef as String: identity] as CFDictionary)
+            }
+        }
+
+        let certificateQuery: [String: Any] = [
+            kSecClass as String: kSecClassCertificate,
+            kSecMatchLimit as String: kSecMatchLimitAll,
+            kSecReturnRef as String: true,
+        ]
+        var certificateResult: CFTypeRef?
+        if SecItemCopyMatching(certificateQuery as CFDictionary, &certificateResult) == errSecSuccess,
+           let certificates = certificateResult as? [SecCertificate] {
+            for certificate in certificates {
+                let der = SecCertificateCopyData(certificate) as Data
+                guard der == leafData || der == rootData else { continue }
+                SecItemDelete([kSecClass as String: kSecClassCertificate, kSecValueRef as String: certificate] as CFDictionary)
+            }
+        }
     }
 
     /// The root that issued the server identity — the sole anchor `TrustEvaluator` should trust

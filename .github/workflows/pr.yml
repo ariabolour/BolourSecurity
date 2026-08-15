@@ -40,12 +40,19 @@ jobs:
         destination:
           - name: macOS
             id: ""
+          # `generic/platform=...` (no device name/OS) rather than a concrete simulator: these
+          # steps only build, never launch, so a generic destination resolves the right SDK/arch
+          # without depending on which specific simulator runtimes happen to be preinstalled on
+          # the runner image — a named device + `OS=latest` can match more than one installed
+          # runtime (seen in practice on visionOS: two "Apple Vision Pro" runtimes, both eligible
+          # for "latest", made the destination ambiguous) and that set silently shifts every time
+          # GitHub rotates the image.
           - name: iOS Simulator
-            id: "platform=iOS Simulator,name=iPhone 16,OS=latest"
+            id: "generic/platform=iOS Simulator"
           - name: watchOS Simulator
-            id: "platform=watchOS Simulator,name=Apple Watch Series 10 (46mm),OS=latest"
+            id: "generic/platform=watchOS Simulator"
           - name: visionOS Simulator
-            id: "platform=visionOS Simulator,name=Apple Vision Pro,OS=latest"
+            id: "generic/platform=visionOS Simulator"
     steps:
       - uses: actions/checkout@v4
 
