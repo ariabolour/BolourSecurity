@@ -4,8 +4,16 @@ All notable changes to BolourSecurity are documented here, per [Keep a Changelog
 
 ## [Unreleased]
 
+### Fixed
+- **watchOS build was broken** (three separate `LocalAuthentication`/`AuthenticationServices` API-unavailability errors in `BolourBiometrics` and `BolourOAuth`, caught by an actual CI run against the watchOS Simulator, not by review). Biometry-only `LAPolicy`/`LAError.Code` cases are now platform-gated with a documented watchOS fallback (`.deviceOwnerAuthentication`, matching the existing honest-limit pattern for `.devicePasscodeOnly`); `OAuthClient.signIn(presentingFrom:)` and its exclusively-owned internals are now `#if !os(watchOS)`-gated with a DocC note, since there is no interactive web-auth surface on that platform at all — `clientCredentialsToken()` remains available everywhere.
+- **Corrected a documentation/implementation mismatch in `BolourSecureStorage`** that overstated a shipped security property: the module doc, README, and ADR-0006 all claimed the vault master key is Secure Enclave-wrapped. It is not — it's software-held in the keychain today, exactly as `Vault.swift`'s own doc comment and this CHANGELOG's Known limitations already said. Fixed every overclaiming reference to match the code, including two further false claims in the module doc's Testing Strategy section (a "master-key rotation" test and an "SE-invalidated master key" test, neither of which exist — there is no rotation API and no SE-specific `MasterKeyUnavailabilityReason` case). For a security library, a doc claiming a guarantee the code doesn't provide is a correctness bug, not a cosmetic one.
+- **Module maturity table corrected:** `BolourBiometrics` and `BolourSecureStorage` moved from Stable Candidate to Beta. Biometrics has zero automated real-hardware biometric test coverage (not gated — genuinely absent), and the watchOS failures above went unnoticed until an actual CI run caught them, which is itself evidence against "freeze-ready." SecureStorage stays Beta until the master-key documentation matches the implementation *and* the Secure Enclave-wrapping ADR-0006 actually commits to is delivered.
+
+### Added
+- **[ADR-0008](docs/adr/0008-exported-import-for-umbrella-reexport.md)**: the `BolourSecurity` umbrella product's re-exports depend on `@_exported import`, an underscored (non-stability-guaranteed) Swift feature. This was always true; it's now an explicit, evaluated decision on record rather than an implicit fact in a code comment — precedented by Apple's own `swift-collections`/`swift-algorithms` packages, with a documented failure mode (a loud compile error at the umbrella target only) and a "Revisit When" trigger.
+
 ### Security
-- Nothing yet since 0.9.0-beta.
+- Nothing else yet since 0.9.0-beta.
 
 ## [0.9.0-beta] - 2026-08-15
 
