@@ -6,12 +6,16 @@
 
 Answer the two storage questions every serious app eventually asks — *"where do I put encrypted files/documents?"* and *"where do my tokens live?"* — with one module: `Vault`, an encrypted file container layered on Data Protection **plus** app-layer AES-GCM; and `TokenStore`, a typed credential store with expiry semantics, built on `BolourKeychain`. This is defense in depth as a default, not a whitepaper diagram.
 
-> **Current implementation status:** the vault master key is software-held in the keychain today, **not** Secure-Enclave-wrapped — see [Honest Limits](#security-considerations--common-mistakes-prevented) below and [CHANGELOG's Known limitations](../../CHANGELOG.md#known-limitations). SE-wrapping is the intended design ([ADR-0006](../adr/0006-secure-enclave-first-key-design.md)) and tracked as future work, not a shipped guarantee — the module's own `Vault.swift` doc comment has always said so; this page previously didn't match it, which is a documentation bug in itself for a security-sensitive claim.
+> **Current implementation status:** the vault master key is software-held in the keychain
+> today, **not** Secure-Enclave-wrapped — see [Honest Limits](#security-considerations--common-mistakes-prevented)
+> and [CHANGELOG's Known limitations](../../CHANGELOG.md#known-limitations). SE-wrapping is the
+> target design ([ADR-0006](../adr/0006-secure-enclave-first-key-design.md)), not a shipped
+> guarantee. `Vault.swift`'s own doc comment has always said so; this page previously didn't.
 
 ## Responsibilities
 
 - `Vault`: named, encrypted file containers — write/read/enumerate/delete by path, streaming support for large payloads.
-- Key hierarchy management: per-file data keys, derived via HKDF from a per-vault master key held as a keychain item — invisible to the caller, documented for the auditor. Secure Enclave wrapping of the master key is the target design ([ADR-0006](../adr/0006-secure-enclave-first-key-design.md)) but is **not yet implemented**; see the status note above.
+- Key hierarchy management: per-file data keys, derived via HKDF from a per-vault master key held as a keychain item — invisible to the caller, documented for the auditor. SE-wrapping the master key is the [ADR-0006](../adr/0006-secure-enclave-first-key-design.md) target, **not yet implemented** (status note above).
 - `TokenStore`: typed storage for tokens/credentials with issuance/expiry metadata; the canonical `SecretStore` conformer that `BolourOAuth` consumes through the Core seam.
 - File-protection class application (`ProtectionPolicy` → `FileProtectionType`) on every artifact it writes.
 
@@ -86,7 +90,7 @@ public enum StorageError: SecurityError {
 
 ## Architecture
 
-- **Key hierarchy:** each file gets a fresh data key (AES-256-GCM via `BolourCrypto.SymmetricKey`), derived via HKDF from the vault master key; the master key itself is held as a keychain item (via `BolourKeychain`) protected by the vault's `ProtectionPolicy`/`PresenceRequirement`. **It is software-held today, not Secure Enclave-wrapped** — that is ADR-0006's stated direction for this module, not its current state (see the status note at the top of this document). There is no master-key rotation API today — see Testing Strategy and Future Roadmap below.
+- **Key hierarchy:** each file gets a fresh data key (AES-256-GCM via `BolourCrypto.SymmetricKey`), derived via HKDF from the vault master key; the master key itself is held as a keychain item (via `BolourKeychain`) protected by the vault's `ProtectionPolicy`/`PresenceRequirement`. **Software-held today, not Secure Enclave-wrapped** — ADR-0006's direction, not its current state. No master-key rotation API yet — see Testing Strategy and Future Roadmap.
 - **On-disk format:** versioned envelope per file — header (format version, wrapped data key, nonce material handled inside `SealedMessage`) + sealed body; file names within the vault are themselves encrypted (directory-listing metadata privacy), with the `VaultPath` index kept in a sealed manifest.
 - `Vault` is one of the three sanctioned actors ([Architecture.md §6](../Architecture.md)): it serializes manifest mutations and file handles; reads of distinct files proceed concurrently via internal task groups.
 - Every artifact written also carries the mapped `FileProtectionType` — app-layer crypto is *in addition to* Data Protection, never a substitute (defense in depth is the module's reason to exist).
@@ -111,7 +115,7 @@ if let token = try await tokens.validToken(for: .accessToken) { … } else { /* 
 
 - Round-trip suites (empty payloads through chunked streaming) and a concurrent-writes-to-distinct-paths storm asserting actor serialization leaves every write intact.
 - **Tamper detection:** a bit-flip anywhere in a file's sealed body, or anywhere in the sealed manifest, is detected and throws `integrityCheckFailed` — never returns garbage plaintext. A truncated on-disk file fails closed without affecting other entries (the crash-safety proxy: no kill-injection harness exists yet, this is the coverage that stands in for it today).
-- **Not yet implemented, so not yet tested:** master-key rotation (there is no `rotate`-style API on `Vault` at all today) and SE-key-invalidation recovery (`MasterKeyUnavailabilityReason` has exactly two cases, `.corruptStoredKey` and `.presenceRequired` — no SE-specific case exists, because there's no SE-backed key yet). Both were previously implied here as if already covered; they're recorded as roadmap items instead — see the module's Future Roadmap and the status note at the top of this document.
+- **Not yet implemented, so not yet tested:** master-key rotation (no `rotate`-style API exists) and SE-key-invalidation recovery (`MasterKeyUnavailabilityReason` has exactly two cases, `.corruptStoredKey` and `.presenceRequired` — no SE-specific case, because there's no SE-backed key yet). Both were previously implied here as already covered; recorded as roadmap items instead.
 - `TokenStore`: expiry/leeway boundary tests; conformance suite run against the `SecretStore` protocol (shared with any future conformer).
 
 ## Security Considerations & Common Mistakes Prevented
@@ -121,11 +125,11 @@ if let token = try await tokens.validToken(for: .accessToken) { … } else { /* 
 - **Prevented: path traversal** — `VaultPath` normalizes and rejects at init.
 - **Prevented: metadata leakage via file names** — encrypted names + sealed manifest.
 - **Prevented: tokens without expiry discipline** — `StoredToken` makes expiry a constructor decision; `validToken` makes staleness one branch.
-- **Honest limits:** vault contents are excluded from encrypted-name search (documented); iCloud/device backups include vault files but not the device-only keychain-held master key (this holds regardless of whether the key is software- or SE-backed — it's a property of `.thisDeviceOnly`-class Keychain accessibility, not of SE specifically), so restored-to-new-device vaults are unreadable by design — the docs make this loud, because it is simultaneously the security property and the support ticket.
+- **Honest limits:** vault contents are excluded from encrypted-name search (documented); iCloud/device backups include vault files but not the device-only keychain-held master key — a property of `.thisDeviceOnly` Keychain accessibility, not of SE specifically, so it holds regardless of whether the key is software- or SE-backed. Restored-to-new-device vaults are unreadable by design; the docs say so loudly, since it's simultaneously the security property and the support ticket.
 
 ## Future Roadmap
 
-- **Secure Enclave-wrapped master key** — the ADR-0006 commitment this module doesn't yet deliver on; the actual gap between design intent and shipped code (see the status note at the top of this document).
+- **Secure Enclave-wrapped master key** — the ADR-0006 commitment this module doesn't yet deliver on.
 - **Master-key rotation API** — no `rotate`-style method exists on `Vault` today.
 - Master-key escrow/recovery-code option for backup-restorable vaults (v2.0 — explicit, name-carries-the-tradeoff API, own ADR).
 - Multi-recipient sealed sharing built on BolourCrypto envelope helpers (v2.x).
