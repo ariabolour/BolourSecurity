@@ -1,6 +1,6 @@
 # Security Policy
 
-BlurSecurity exists to protect apps and their users. Reports of vulnerabilities in BlurSecurity itself are the most important issues we can receive, and this policy is our commitment to handling them seriously, fast, and honestly.
+BolourSecurity exists to protect apps and their users. Reports of vulnerabilities in BolourSecurity itself are the most important issues we can receive, and this policy is our commitment to handling them seriously, fast, and honestly.
 
 ## Reporting a Vulnerability
 
@@ -27,13 +27,13 @@ Please include: affected module(s) and version(s), a description of the issue an
 
 ## Scope
 
-**In scope:** any way BlurSecurity's code, defaults, or documentation causes an adopting app to be less secure than promised — including misuse-resistance failures (an API that can be held wrong in a way our design claims impossible) and documentation that materially overclaims ([RiskAnalysis R4](docs/RiskAnalysis.md)). Those are security bugs here, not paper cuts.
+**In scope:** any way BolourSecurity's code, defaults, or documentation causes an adopting app to be less secure than promised — including misuse-resistance failures (an API held wrong in a way our design specifically claims to make harder or unrepresentable) and documentation that materially overclaims ([RiskAnalysis R4](docs/RiskAnalysis.md)). Those are security bugs here, not paper cuts.
 
-**Out of scope:** vulnerabilities in Apple's frameworks (report to Apple; we'll mitigate where we can and document where we can't), issues requiring a compromised OS beyond our documented threat models, and vulnerabilities in apps' own code using our APIs as documented.
+**Out of scope:** vulnerabilities in Apple's frameworks (report to Apple; we'll mitigate where we can and document where we can't), issues requiring a compromised OS beyond what [THREAT_MODEL.md](THREAT_MODEL.md) covers, and vulnerabilities in apps' own code using our APIs as documented.
 
 ## Safe Harbor
 
-Good-faith research against your own installations of BlurSecurity is welcome. We will never pursue or support action against researchers acting in good faith within this policy.
+Good-faith research against your own installations of BolourSecurity is welcome. We will never pursue or support action against researchers acting in good faith within this policy.
 
 ## For Adopters
 

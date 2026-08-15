@@ -1,6 +1,6 @@
 # API Design Philosophy
 
-Every public symbol in BlurSecurity is designed against the [Swift API Design Guidelines](https://www.swift.org/documentation/api-design-guidelines/), then held to a stricter standard: **the API must make the secure path the shortest path, and the insecure path a visible decision.** This document defines the five pillars, the naming system, and the review checklist every API PR must pass.
+Every public symbol in BolourSecurity is designed against the [Swift API Design Guidelines](https://www.swift.org/documentation/api-design-guidelines/), then held to a stricter standard: **the API must make the secure path the shortest path, and the insecure path a visible decision.** This document defines the five pillars, the naming system, and the review checklist every API PR must pass.
 
 All Swift in this document is *signature-level design*, not implementation.
 
@@ -39,9 +39,9 @@ Two corollaries:
 - **Absence beats opt-out.** Where a practice is indefensible (implicit grant, ECB mode, `alg: none`), we do not ship it behind a flag. It simply does not exist.
 - **Weakening never hides in a boolean.** `allowInsecure: true` tells a reviewer nothing. Named types and argument labels carry the meaning: `.trust(.unvalidatedForDebugBuilds)` is greppable and self-indicting.
 
-## Pillar 2 — Impossible to Misuse
+## Pillar 2 — Hard to Misuse by Construction
 
-The type system eliminates bug classes rather than documenting them.
+The type system eliminates bug classes rather than documenting them, wherever it practically can. This narrows what a caller can get wrong — it is not a claim that misuse is impossible or that any given type has been proven correct; see [THREAT_MODEL.md](../THREAT_MODEL.md) for what this framework does and doesn't guarantee.
 
 **Distinct types for distinct secrets.** Keys, nonces, digests, tokens, and passwords are never bare `Data` or `String`:
 
@@ -88,7 +88,7 @@ public struct Signature<Curve: SigningCurve>: Sendable { … }
 
 We follow the Swift API Design Guidelines to the letter — clarity at the point of use, fluent grammatical call sites, omit needless words — and adopt modern Swift wholesale:
 
-- **`async/await` only.** No completion handlers, no delegate-required flows in public API. Where the OS speaks delegate (URLSession auth challenges), BlurSecurity adapts internally.
+- **`async/await` only.** No completion handlers, no delegate-required flows in public API. Where the OS speaks delegate (URLSession auth challenges), BolourSecurity adapts internally.
 - **Typed throws** per [ADR-0004](adr/0004-typed-throws-error-architecture.md).
 - **Value semantics** for everything without genuine identity; the three sanctioned actors are listed in [Architecture.md §6](Architecture.md).
 - **No public singletons.** `Keychain`, `Vault`, `BiometricAuthenticator`, `OAuthClient` are instances the app creates, owns, and injects — testable by construction.
@@ -102,7 +102,7 @@ let session = try await client.signIn(presentingFrom: anchor)
 let ok      = verifier.isValidSignature(sig, for: digest)
 ```
 
-- **Property-wrapper sugar where it genuinely fits** (synchronous, non-throwing reads of cached keychain state) is layered *on top of* the core API, never a replacement for it, and documented with its exact semantics (`@KeychainStored` in the BlurKeychain spec).
+- **Property-wrapper sugar where it genuinely fits** (synchronous, non-throwing reads of cached keychain state) is layered *on top of* the core API, never a replacement for it, and documented with its exact semantics (`@KeychainStored` in the BolourKeychain spec).
 
 ## Pillar 4 — Composable
 
@@ -110,7 +110,7 @@ let ok      = verifier.isValidSignature(sig, for: digest)
 - Cross-module needs are protocol seams defined in Core (`SecretStore`, `TrustEvaluating`, …) so any conforming implementation — including a test double — slots in:
 
 ```swift
-// BlurOAuth doesn't know about BlurSecureStorage. It knows about the seam:
+// BolourOAuth doesn't know about BolourSecureStorage. It knows about the seam:
 public struct OAuthClient: Sendable {
     public init(
         configuration: OAuthConfiguration,
@@ -130,8 +130,8 @@ public struct OAuthClient: Sendable {
 
 ## Naming System
 
-- **Modules:** `Blur` + capability noun (`BlurKeychain`). No abbreviations.
-- **Types:** plain nouns without prefixes — inside `BlurKeychain`, the type is `Keychain`, not `BlurKeychain` or `BLRKeychain`. Swift module namespacing exists; we use it. Collisions with Apple types are avoided by choosing more precise nouns (our CryptoKit-adjacent types pick names CryptoKit doesn't use, e.g. `SealedMessage`, `SecureEnclaveKey`).
+- **Modules:** `Bolour` + capability noun (`BolourKeychain`). No abbreviations.
+- **Types:** plain nouns without prefixes — inside `BolourKeychain`, the type is `Keychain`, not `BolourKeychain` or `BLRKeychain`. Swift module namespacing exists; we use it. Collisions with Apple types are avoided by choosing more precise nouns (our CryptoKit-adjacent types pick names CryptoKit doesn't use, e.g. `SealedMessage`, `SecureEnclaveKey`).
 - **The `unsafe`/`unvalidated`/`software` lexicon** is reserved: those words appear in a name if and only if the API weakens a guarantee, and every guarantee-weakening API contains one of them.
 - **`unverified` prefix** on any accessor exposing data before trust evaluation (`unverifiedHeader`, `unverifiedPayloadClaims`).
 - Factory methods on the *produced* type (`SymmetricKey.random()`, `Nonce.random()`); conversions as initializers (`SPKIHash(base64Encoded:)`).
@@ -147,4 +147,8 @@ Every PR adding or changing public API must answer in the PR description:
 5. Is the failure domain typed, and does every error case teach?
 6. Is anything secret printable, `Codable`, or reflectable through this API?
 7. What does the DocC summary line say? (One sentence, no caveats needed = good design signal.)
-8. Craig test: would this signature look at home on an Apple framework diff?
+8. Is `Sendable` conformance correct? If `@unchecked Sendable` appears, is the invariant that makes it safe written down at the declaration, not just believed?
+9. Could an overload make a call site ambiguous, or require the caller to disambiguate with an explicit type — and if so, is that friction deliberate (e.g. forcing a visible choice between `software`/hardware-backed) or accidental?
+10. Craig test: would this signature look at home on an Apple framework diff?
+
+Applied module-by-module as a documented pass (not a per-PR-only checklist): spot review across `BolourJWT`'s verifier, `BolourOAuth`'s `TokenManager` actor, and `BolourCrypto`'s `SecureEnclaveKey` found the checklist already satisfied in each case — typed throws throughout, `@unchecked Sendable` used only where the platform documents the underlying type as concurrency-safe (`SecKey`, in `SecKeyBox`) with that reasoning written at the declaration, and single-flight refresh correctly actor-isolated rather than lock-based. The one gap this pass found and fixed was the unguarded force-cast in `SecureEnclaveKey.load(tag:)` (`secKey as! SecKey`): the natural fix, `as?`, turned out to compile as an unconditional success for this CF-bridged type (Swift's own "will always succeed" diagnostic caught it) — not a real check at all — so the actual fix is a `CFGetTypeID` guard ahead of the cast, which *is* a real runtime check against Apple's documented return-type contract for the query.
