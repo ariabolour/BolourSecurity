@@ -55,11 +55,20 @@ underneath it.
 Real Face ID/Touch ID/Optic ID prompts, real App Attest, and real `ASWebAuthenticationSession`
 UI can't be driven from an unattended, unentitled process at all — not gated, genuinely
 untestable that way without an actual app target holding the relevant entitlements, running on
-real hardware with a human present. That's the gap `BolourSecurityIntegrationApp` (specified,
-not yet built — see the [1.0 gate checklist](../ROADMAP.md#whats-required-before-100)) exists
-to close.
+real hardware with a human present. `BolourSecurityIntegrationApp` v1 exists and gives that app
+target for manual, human-present verification (simulator-scope by default; add your own Team ID
+for the entitled paths — see its [README](../BolourSecurityIntegrationApp/README.md)). What it
+doesn't yet do is run automatically in CI — see the [1.0 gate checklist](../ROADMAP.md#whats-required-before-100).
 
-## Manual verification checklist (until `BolourSecurityIntegrationApp` exists)
+## Manual verification checklist
+
+**`BolourSecurityIntegrationApp` v1 exists now** ([README](../BolourSecurityIntegrationApp/README.md))
+and gives you a tappable screen for the Keychain, Secure Enclave, Biometrics, and App Attest
+items below instead of writing throwaway code yourself — it doesn't replace the checklist's
+judgment calls (what the system UI should look like, what "invisible on an always-unlocked CI
+runner" means), just the boilerplate of getting to them. It's a manual-verification aid, not an
+automated test — it does not run in CI and does not host the `.requiresDevice` XCTest suites
+themselves (that's still outstanding — see [ROADMAP's 1.0 gate](../ROADMAP.md#whats-required-before-100)).
 
 - **Face ID / Touch ID / Optic ID:** call `BiometricAuthenticator().authenticate(reason:)` on a
   real device with biometry enrolled; confirm the right system UI appears, passcode fallback

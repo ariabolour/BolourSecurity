@@ -1,0 +1,46 @@
+name: BolourSecurityIntegrationApp
+
+options:
+  bundleIdPrefix: com.ariabolour
+  deploymentTarget:
+    iOS: "16.0"
+  createIntermediateGroups: true
+
+packages:
+  BolourSecurity:
+    path: ../
+
+targets:
+  BolourSecurityIntegrationApp:
+    type: application
+    platform: iOS
+    sources:
+      - path: Sources
+    dependencies:
+      - package: BolourSecurity
+        product: BolourSecurity
+    entitlements:
+      path: BolourSecurityIntegrationApp.entitlements
+      properties:
+        # Has no effect on simulator builds or without a real Team ID — DCAppAttestService
+        # reports isSupported == false in Simulator regardless of this entitlement, which is
+        # itself the honest result the App Attest screen is built to show. A developer adding
+        # their own Team ID for real-device testing needs this key present to go further.
+        com.apple.developer.devicecheck.appattest-environment: development
+    settings:
+      base:
+        # Placeholder bundle ID for a public sample app — change this if you sign with your own
+        # team. Not a real registered identifier.
+        PRODUCT_BUNDLE_IDENTIFIER: com.ariabolour.BolourSecurityIntegrationApp
+        CODE_SIGN_STYLE: Automatic
+        # Deliberately no DEVELOPMENT_TEAM: this is a public repo: every developer running this
+        # app signs with their own Apple ID, not one baked into the project.
+        SWIFT_VERSION: "6.0"
+        SWIFT_STRICT_CONCURRENCY: complete
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
+        INFOPLIST_KEY_NSFaceIDUsageDescription: "BolourSecurityIntegrationApp uses Face ID to validate BolourBiometrics' authentication flow."
+        MARKETING_VERSION: "1.0"
+        CURRENT_PROJECT_VERSION: "1"
+        TARGETED_DEVICE_FAMILY: "1"
