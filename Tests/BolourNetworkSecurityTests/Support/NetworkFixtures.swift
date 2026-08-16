@@ -16,8 +16,11 @@ enum NetworkFixtures {
     /// as one atomic unit, not just be idempotent per call.
     private static let importLock = NSLock()
 
-    private static func url(_ name: String, _ ext: String) -> URL {
-        Bundle.module.url(forResource: name, withExtension: ext, subdirectory: "Fixtures")!
+    private static func url(_ name: String, _ ext: String) throws -> URL {
+        guard let url = Bundle.module.url(forResource: name, withExtension: ext, subdirectory: "Fixtures") else {
+            throw NetworkFixtureError.missingFixture(name: "\(name).\(ext)")
+        }
+        return url
     }
 
     /// The `SecIdentity` (cert + private key) the local TLS harness serves.
@@ -29,6 +32,13 @@ enum NetworkFixtures {
     ///   per process (once per test that stands up a `LocalTLSServer`) collides with the earlier
     ///   import (`errSecDuplicateItem`). Clearing any prior copy of both first makes the call
     ///   idempotent regardless of call count or which keychain the runner treats as default.
+    ///
+    /// - Note: This **throws** rather than trapping on failure. It used to `fatalError`, which
+    ///   meant one unimportable fixture aborted the whole test binary — every unrelated suite in
+    ///   this target included, with no per-test diagnosis. A host with no default keychain
+    ///   (`errSecNoDefaultKeychain`, -25307) is enough to trigger it, and that is an environment
+    ///   to skip, not a reason to take the process down. `TLSHarnessTests` gates on
+    ///   ``isAvailable``.
     static func serverIdentity() throws -> SecIdentity {
         importLock.lock()
         defer { importLock.unlock() }
@@ -37,11 +47,19 @@ enum NetworkFixtures {
         let options: [String: Any] = [kSecImportExportPassphrase as String: pkcs12Passphrase]
         var rawItems: CFArray?
         let status = SecPKCS12Import(data as CFData, options as CFDictionary, &rawItems)
-        guard status == errSecSuccess, let items = rawItems as? [[String: Any]],
-              let first = items.first,
+        guard status == errSecSuccess else {
+            throw NetworkFixtureError.pkcs12ImportFailed(status: status)
+        }
+        guard let items = rawItems as? [[String: Any]], let first = items.first,
               let identity = first[kSecImportItemIdentity as String]
         else {
-            fatalError("failed to import server-identity.p12 fixture (status \(status))")
+            throw NetworkFixtureError.pkcs12ImportYieldedNoIdentity
+        }
+        // `as?` is not a real runtime check against a CFTypeRef — toll-free bridging means the
+        // compiler proves the cast always succeeds, so it tests nothing. `CFGetTypeID` is the
+        // actual check (same reasoning as `SecureEnclaveKey.load(tag:)`, per ADR-0006).
+        guard CFGetTypeID(identity as CFTypeRef) == SecIdentityGetTypeID() else {
+            throw NetworkFixtureError.pkcs12ImportYieldedNoIdentity
         }
         // swiftlint:disable:next force_cast
         return (identity as! SecIdentity)
@@ -103,4 +121,62 @@ enum NetworkFixtures {
 
     static func leafPin() throws -> SPKIHash { SPKIHash(of: try leaf()) }
     static func decoyPin() throws -> SPKIHash { SPKIHash(of: try decoy()) }
+
+    /// True when this host can import the PKCS12 fixture at all — i.e. whether the TLS harness
+    /// can be stood up here.
+    ///
+    /// On macOS `SecPKCS12Import` writes through the *default keychain*, so a process with no
+    /// login session (a headless container, a sandbox with no Mach access to the Security
+    /// daemons) fails with `errSecNoDefaultKeychain` no matter how sound the fixture is. There is
+    /// no keychain-free path to a `SecIdentity` on macOS: `SecIdentityCreateWithCertificate`
+    /// requires the private key to already live in a keychain, and the alternative —
+    /// `SecKeychainCreate` into a scratch keychain — is both deprecated and worse here, since a
+    /// legacy file-based keychain prompts a GUI dialog on key use and hangs an unattended run.
+    /// So the harness is gated, not made hermetic.
+    ///
+    /// A failure that is *not* environmental (a corrupt fixture, the wrong passphrase) returns
+    /// true so the suite runs and reports it, rather than skipping the regression away.
+    static let isAvailable: Bool = {
+        do {
+            _ = try serverIdentity()
+            return true
+        } catch let error as NetworkFixtureError {
+            return !error.isEnvironmental
+        } catch {
+            return true
+        }
+    }()
+}
+
+enum NetworkFixtureError: Error, CustomStringConvertible {
+    case missingFixture(name: String)
+    case pkcs12ImportFailed(status: OSStatus)
+    case pkcs12ImportYieldedNoIdentity
+
+    /// Whether this reports "the host cannot do the import", as opposed to "the fixture is wrong".
+    /// Mirrors `SystemTrustProbe.infrastructureFailureStatuses` in `BolourCertificatesTests` —
+    /// duplicated rather than shared because `@testable import` reaches production targets only,
+    /// never a sibling test target (the same reason `KeychainProbe` exists in three copies).
+    var isEnvironmental: Bool {
+        guard case .pkcs12ImportFailed(let status) = self else { return false }
+        return [
+            -26276,                       // errSecInternal: Security's daemons are unreachable.
+            errSecNotAvailable,           // -25291
+            errSecNoDefaultKeychain,      // -25307: headless, no login session.
+            errSecInteractionNotAllowed,  // -25308: a locked keychain nothing can unlock.
+            errSecServiceNotAvailable,    // -67585
+            errSecMissingEntitlement,     // -34018
+        ].contains(status)
+    }
+
+    var description: String {
+        switch self {
+        case .missingFixture(let name):
+            return "fixture \(name) is missing — run scripts/generate-network-security-fixtures.sh"
+        case .pkcs12ImportFailed(let status):
+            return "SecPKCS12Import failed (OSStatus \(status))"
+        case .pkcs12ImportYieldedNoIdentity:
+            return "SecPKCS12Import succeeded but returned no SecIdentity"
+        }
+    }
 }

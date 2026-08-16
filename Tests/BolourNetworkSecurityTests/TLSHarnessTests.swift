@@ -9,7 +9,15 @@ import Network
 /// `TrustEvaluator` here always carries the harness's own root as a test anchor (mirroring
 /// `TrustEvaluatorTests` in BolourCertificatesTests) so these tests exercise pinning/refusal
 /// behavior without depending on any real public CA.
-@Suite("In-process TLS harness")
+///
+/// Gated on ``NetworkFixtures/isAvailable``: standing the harness up needs a `SecIdentity`, and
+/// on macOS the only route to one runs through the default keychain — unavailable on a headless
+/// or sandboxed host. See `docs/IntegrationTesting.md`.
+@Suite(
+    "In-process TLS harness",
+    .tags(.requiresSecurityServices),
+    .enabled(if: NetworkFixtures.isAvailable)
+)
 struct TLSHarnessTests {
 
     private func startServer(
@@ -61,7 +69,7 @@ struct TLSHarnessTests {
         defer { server.stop() }
         let decoyPin = try NetworkFixtures.decoyPin()
         let policy = [PinningPolicy(host: "localhost", primary: decoyPin, backups: NonEmptyPins(decoyPin))]
-        await #expect(throws: (any Error).self) {
+        await #expect(throws: URLError.self) {
             _ = try await session(pinning: policy).data(from: URL(string: "https://localhost:\(server.port)/")!)
         }
     }
@@ -79,7 +87,7 @@ struct TLSHarnessTests {
     func unpinnedRefuse() async throws {
         let server = try await startServer()
         defer { server.stop() }
-        await #expect(throws: (any Error).self) {
+        await #expect(throws: URLError.self) {
             _ = try await session(unpinnedHostBehavior: .refuse)
                 .data(from: URL(string: "https://localhost:\(server.port)/")!)
         }
@@ -94,7 +102,7 @@ struct TLSHarnessTests {
             backups: NonEmptyPins(try NetworkFixtures.decoyPin()),
             expiry: .enforceUntil(Date(timeIntervalSince1970: 0))
         )
-        await #expect(throws: (any Error).self) {
+        await #expect(throws: URLError.self) {
             _ = try await session(pinning: [expired]).data(from: URL(string: "https://localhost:\(server.port)/")!)
         }
     }
@@ -103,7 +111,7 @@ struct TLSHarnessTests {
     func tlsFloorRejectsWeakServer() async throws {
         let server = try await startServer(minimumVersion: .TLSv12, maximumVersion: .TLSv12)
         defer { server.stop() }
-        await #expect(throws: (any Error).self) {
+        await #expect(throws: URLError.self) {
             _ = try await session(minimumTLS: .v1_3).data(from: URL(string: "https://localhost:\(server.port)/")!)
         }
     }

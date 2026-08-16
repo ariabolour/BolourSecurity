@@ -26,6 +26,39 @@ Real OS backends a plain macOS/simulator process can reach: `SecTrust` against g
 CAs, an in-process TLS harness, an in-process local IdP. Hermetic — nothing reaches the real
 network.
 
+"A plain process can reach them" holds on any host with a normal login session, but not
+everywhere. `SecTrust` needs `trustd`; `SecPKCS12Import` writes through the **default keychain**
+on macOS, and there is no keychain-free route to a `SecIdentity` there
+(`SecIdentityCreateWithCertificate` wants the private key in a keychain already, and creating a
+scratch legacy keychain is both deprecated and worse — it prompts a GUI dialog on key use, which
+hangs an unattended run). A headless container or a sandbox without Mach access to the Security
+daemons therefore fails these for reasons that have nothing to do with this package's code:
+
+| Suite | Target | Probe | Symptom where the subsystem is unreachable |
+|---|---|---|---|
+| `Trust evaluation` | `BolourCertificatesTests` | `SystemTrustProbe.isAvailable` | Happy paths fail with `errSecInternal` (-26276); the fail-closed tests "pass" without evaluating anything |
+| `In-process TLS harness` | `BolourNetworkSecurityTests` | `NetworkFixtures.isAvailable` | `SecPKCS12Import` returns `errSecNoDefaultKeychain` (-25307) |
+
+Both carry `Tag.requiresSecurityServices` (declared per-target in `SecurityServicesTestTags.swift`)
+and skip rather than fail there. Two properties keep that gate from hiding real bugs:
+
+- **The probes discriminate by cause, not by outcome.** They classify the failure status:
+  infrastructure-class (`-26276`, `errSecNoDefaultKeychain`, `errSecNotAvailable`,
+  `errSecInteractionNotAllowed`, `errSecServiceNotAvailable`, `errSecMissingEntitlement`) skips;
+  anything else — a corrupt fixture, a wrong passphrase, a genuine `TrustEvaluator` regression —
+  runs the suite so it fails properly. `SystemTrustProbe` calls the Security APIs directly rather
+  than through `TrustEvaluator`, so a regression in our own code can never skip the suite that
+  would have caught it.
+- **The fail-closed tests assert which failure occurred.** A pin test that accepts any
+  `CertificateError` passes on a host where system trust rejects every chain before pinning is
+  consulted. They now require `pinMismatch`/`pinSetExpired` specifically, and re-check the
+  infrastructure classification per test in case the environment changes mid-run.
+
+None of this is hypothetical. Both failures have been observed, and neither was a code defect;
+worse, `NetworkFixtures` used to trap with `fatalError` on an unimportable fixture, taking the
+whole test binary down with it so every unrelated suite in that target disappeared too. That
+trap is now a thrown, classified error.
+
 ### Tier 3 — Device-required (tagged `.requiresDevice`; no CI lane executes it yet)
 
 Three suites exercise a real OS security backend, gated behind a runtime probe
@@ -39,7 +72,9 @@ hang where the backend is unreachable:
 | `TokenStore` | `BolourSecureStorageTests` | Real `SecItem*` calls (via `BolourKeychain`) | Same as `Keychain integration` |
 
 All three carry `Tag.requiresDevice` (declared per-target in `DeviceTestTags.swift`, since this
-package has no shared test-support target). One caveat: `swift test`'s `--filter`/`--skip`
+package has no shared test-support target) — distinct from Tier 2's `.requiresSecurityServices`,
+which marks suites that *should* run on any ordinary host and are gated only against the
+environments where the Security subsystem is missing. One caveat: `swift test`'s `--filter`/`--skip`
 match on test/suite *name* via regex, not on tags — there's no `--filter-tag` in the current
 toolchain. The tag is for Xcode's test-plan UI (the actual mechanism a device-hosted run would
 use) and as greppable documentation, not for `swift test` itself.
