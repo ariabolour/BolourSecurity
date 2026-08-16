@@ -11,7 +11,7 @@ category yourself. See also the [module maturity table](../README.md#module-matu
 
 Everything not listed below: policy mappings, parsers, state machines exercised against
 scripted test doubles (`AppAttestServicing`, `PolicyEvaluating`,
-`AuthorizationSessionPresenting`, etc.). The vast majority of the suite — 213 tests, 44 suites
+`AuthorizationSessionPresenting`, etc.). The vast majority of the suite — 245 tests, 46 suites
 as of this writing, all green on macOS on every PR.
 
 `BolourBiometrics`, `BolourAppIntegrity`, and `BolourOAuth`'s suites are entirely Tier 1 today —

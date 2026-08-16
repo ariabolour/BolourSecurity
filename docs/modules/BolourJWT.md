@@ -153,6 +153,7 @@ let jwt = try await signer.sign(SessionClaims(userID: id, roles: []), expiresIn:
 
 | Check | Automatic? | Notes |
 |---|---|---|
+| Duplicate member names | **Yes** | Rejected in both header and payload, at every nesting level, *before* any decoding — see below |
 | Signature verification | **Yes** | Against the key(s) supplied to the verifier — never against a key the token itself names |
 | Algorithm/key consistency | **Yes** | The token header's `alg` is checked for consistency with the matched key's own algorithm; it never *selects* which routine runs (see Architecture) |
 | `kid` narrowing | **Yes, when present** | Narrows candidate keys; never substitutes for the signature check above |
@@ -162,6 +163,34 @@ let jwt = try await signer.sign(SessionClaims(userID: id, roles: []), expiresIn:
 | Issuer (`iss`) | **Yes** | Required constructor parameter on `JWTValidationPolicy` — cannot be omitted |
 | Audience (`aud`) | **Yes** | Same — required, not optional |
 | Issued-at (`iat`) | **No** | RFC 7519 defines `iat` as informational, not a validity bound; nothing in the JWT spec says a past `iat` should reject a token, so this module doesn't invent a policy for it. If your protocol needs an `iat` freshness window, enforce it in your own claims type after verification. |
+
+### Duplicate member names
+
+RFC 8259 §4 says object member names "SHOULD be unique" — a SHOULD — and leaves duplicates to
+the implementation. `JSONDecoder` silently keeps the **last** value; plenty of parsers keep the
+first. So `{"alg":"none","alg":"ES256"}` *means different things* to different readers: this
+library would see `ES256` and verify happily while a first-wins server, proxy, or auditor reads
+`none`. That disagreement is the whole attack, and it applies just as well to `iss`, `aud`,
+`exp`, or an application's own authorization claim.
+
+No decoder API exposes a duplicate-key policy, so `UnverifiedJWT` scans the raw header and
+payload bytes with an in-tree tokenizer (`JSONMemberScanner`) before anything is decoded, and
+rejects **any** repeated name at **any** nesting level — `duplicateHeaderParameter` /
+`duplicatePayloadClaim`. Three properties are worth knowing:
+
+- **Every name, not a list.** Rejecting all repeats covers `alg`, `kid`, `iss`, `aud`, `exp`,
+  `nbf`, `iat`, and `jti` by construction, and equally covers the application-specific claims
+  your app authorizes on, which this module has never heard of.
+- **Names are compared decoded, not as raw bytes.** `"alg"` and `"alg"` are the same member
+  name to any conforming parser; a byte comparison would let one half of a duplicated pair be
+  spelled in escapes and walk straight past the check.
+- **The error names the member only when it is a registered one.** Membership is decided against
+  a fixed set, so an error message can never carry token-chosen text into a log.
+
+Like the DER scanner in `BolourCertificates`, it is total: it never traps and never recurses
+(nesting rides an explicit stack). Input it cannot parse is reported as unscannable and left to
+`JSONDecoder` to reject — it defers to the decoder on what valid JSON *is*, rather than becoming
+a second, subtly divergent validator that might refuse tokens the decoder would accept.
 
 What `VerifiedJWT` deliberately leaves to the application, because they're protocol-specific and
 this module has no way to know the right answer:

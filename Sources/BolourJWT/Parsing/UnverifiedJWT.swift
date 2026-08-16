@@ -42,6 +42,18 @@ public struct UnverifiedJWT: Sendable {
             throw JWTError.malformedToken(detail: .invalidBase64)
         }
 
+        // Before any decoding: `JSONDecoder` resolves a repeated member name by silently keeping
+        // the last value, which makes a token with duplicates mean one thing here and something
+        // else to a first-wins reader downstream. Both segments are screened, and the payload is
+        // screened here rather than at `verify` time so no caller can reach an ambiguous token
+        // through any path. See `JSONMemberScanner`.
+        if case .duplicate(let name) = JSONMemberScanner.scan(headerData) {
+            throw JWTError.malformedToken(detail: .duplicateHeaderParameter(name: name))
+        }
+        if case .duplicate(let name) = JSONMemberScanner.scan(payloadData) {
+            throw JWTError.malformedToken(detail: .duplicatePayloadClaim(name: name))
+        }
+
         let header: JWTHeader
         do {
             header = try JSONDecoder().decode(JWTHeader.self, from: headerData)

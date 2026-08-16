@@ -9,6 +9,14 @@ public enum MalformationDetail: Sendable, Hashable, CustomStringConvertible {
     case invalidBase64
     case headerNotJSON
     case headerMissingAlgorithm
+    /// A member name repeats in the header. Ambiguous by construction — see
+    /// ``JSONMemberScanner``. The name is present only when it is one of the registered JOSE/JWT
+    /// names; it is matched against a fixed set, never copied out of the token, so this can
+    /// never carry attacker-chosen text into a log.
+    case duplicateHeaderParameter(name: String?)
+    /// A member name repeats in the payload. Same reasoning as
+    /// ``duplicateHeaderParameter(name:)``.
+    case duplicatePayloadClaim(name: String?)
 
     public var description: String {
         switch self {
@@ -17,6 +25,10 @@ public enum MalformationDetail: Sendable, Hashable, CustomStringConvertible {
         case .invalidBase64: return "invalid base64url"
         case .headerNotJSON: return "header was not a JSON object"
         case .headerMissingAlgorithm: return "header is missing \"alg\""
+        case .duplicateHeaderParameter(let name):
+            return "the header repeats a parameter\(name.map { " (\"\($0)\")" } ?? "")"
+        case .duplicatePayloadClaim(let name):
+            return "the payload repeats a claim\(name.map { " (\"\($0)\")" } ?? "")"
         }
     }
 }
