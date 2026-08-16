@@ -155,7 +155,17 @@ One protocol in Core; one concrete error enum per module:
 
 ## 8. Secure Enclave & Hardware Strategy
 
-Hardware-backed keys are a first-class concept, not an add-on: `BolourCrypto.SecureEnclaveKey` is the preferred signing/agreement key type wherever the platform supports it, and higher modules (`BolourAppIntegrity`, `BolourSecureStorage` master keys) build on it by default. Software fallback is explicit, never silent. See [ADR-0006](adr/0006-secure-enclave-first-key-design.md).
+Hardware-backed keys are a first-class concept, not an add-on: `BolourCrypto.SecureEnclaveKey` is the preferred signing key type wherever the platform supports it, and software fallback is explicit, never silent — you reach it through a `software`-named initializer, so the choice is visible in every review. It is built on `Security.framework`'s `SecKey` rather than CryptoKit's `SecureEnclave.P256`; [ADR-0006](adr/0006-secure-enclave-first-key-design.md) records why.
+
+Per module, as actually delivered:
+
+| Module | Hardware-backed today? |
+|---|---|
+| `BolourCrypto` | Yes — `SecureEnclaveKey` is a real SE-resident P-256 key |
+| `BolourAppIntegrity` | Yes — App Attest's own keys are SE-resident by construction |
+| `BolourSecureStorage` | **No.** Vault master keys are the *intent* under this decision, but they are software-held in the keychain today |
+
+That last row is a gap between decision and delivery, kept visible here rather than assumed away: see [ADR-0006](adr/0006-secure-enclave-first-key-design.md), [BolourSecureStorage's module doc](modules/BolourSecureStorage.md), and [CHANGELOG's Known limitations](../CHANGELOG.md#known-limitations).
 
 ## 9. What BolourSecurity Deliberately Does Not Do
 

@@ -13,9 +13,10 @@ import BolourCrypto
 /// the `VaultPath → identifier` mapping lives only in the sealed manifest, so directory listings
 /// on disk reveal nothing.
 ///
-/// - Note: **Honest limits (v0.5 scope).** The master key is software-held in the keychain, not
-///   yet Secure-Enclave-wrapped (`BolourCrypto.SecureEnclaveKey` doesn't exist yet either — this
-///   tracks that same deferral). `writeStream`/`readStream` buffer their full payload in memory
+/// - Note: **Honest limits.** The master key is software-held in the keychain, not
+///   Secure-Enclave-wrapped. `BolourCrypto.SecureEnclaveKey` does exist now — this is no longer
+///   blocked on it, just not done; see [ADR-0006](../../../docs/adr/0006-secure-enclave-first-key-design.md)
+///   for the target and the gap. `writeStream`/`readStream` buffer their full payload in memory
 ///   rather than encrypting/decrypting in constant-memory segments — correct today for
 ///   reasonably sized files, not yet suited to the multi-GB tier the module's design doc
 ///   describes; a segmented-AEAD streaming cipher is future work.

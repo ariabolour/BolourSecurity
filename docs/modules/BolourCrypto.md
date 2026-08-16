@@ -65,28 +65,31 @@ public struct VerificationKey<A: SignatureAlgorithm>: Sendable, Codable {
 public struct Signature<A: SignatureAlgorithm>: Sendable, Codable { … }
 
 // MARK: Secure Enclave (the flagship key type)
+// Backed by Security.framework's SecKey, not CryptoKit's SecureEnclave.P256 — see ADR-0006.
 public struct SecureEnclaveKey: Sendable {
+    public let tag: String
+
     /// Creates a new P-256 key inside the Secure Enclave. Throws
     /// `.secureEnclaveUnavailable` on unsupported hardware — never silently
     /// falls back to a software key (ADR-0006).
-    public static func create(
-        tag: ItemKey,
-        presence: PresenceRequirement = .none,
-        protection: ProtectionPolicy = .default
-    ) throws(CryptoError) -> SecureEnclaveKey
-
-    public static func load(tag: ItemKey) throws(CryptoError) -> SecureEnclaveKey?
-    public static func destroy(tag: ItemKey) throws(CryptoError)
+    public static func create(tag: String) throws(CryptoError) -> SecureEnclaveKey
+    public static func load(tag: String) throws(CryptoError) -> SecureEnclaveKey?
+    public func destroy() throws(CryptoError)
 
     public var verificationKey: VerificationKey<P256> { get }
-    /// async: may present a biometric prompt when created with a presence requirement.
-    public func signature(for data: some DataProtocol,
-                          context: AuthenticatedContext? = nil) async throws(CryptoError) -> Signature<P256>
-    public func sharedSecret(with peer: VerificationKey<P256>,
-                             context: AuthenticatedContext? = nil) async throws(CryptoError) -> SharedSecret
+    public func signature(for data: some DataProtocol) throws(CryptoError) -> Signature<P256>
 }
+```
 
-// MARK: Key agreement & derivation
+**Not yet shipped on this type**, and named here so the gap is explicit rather than implied by
+omission: keys are created with a fixed access control
+(`kSecAttrAccessibleWhenUnlockedThisDeviceOnly` + `.privateKeyUsage`) — there is no
+`presence:`/`protection:` parameter and so no `AuthenticatedContext` overload on `signature`,
+which is consequently synchronous and never prompts. ECDH key agreement
+(`sharedSecret(with:)`/`SharedSecret`) does not exist either. Both remain design targets:
+
+```swift
+// MARK: Key agreement & derivation — SharedSecret is a design target, not shipped in 0.9.0-beta.
 public struct SharedSecret: Sendable {
     public func sessionKey(info: some DataProtocol,
                            salt: (some DataProtocol)? = nil,
@@ -115,7 +118,8 @@ public enum SecureRandom {
 
 ## Architecture
 
-- Thin, total mappings onto CryptoKit types internally (`SymmetricKey` wraps `CryptoKit.SymmetricKey`; `SigningKey<P256>` wraps `P256.Signing.PrivateKey`; `SecureEnclaveKey` wraps `SecureEnclave.P256` with keychain-persisted handles shared with BolourKeychain via an internal Core seam).
+- Thin, total mappings onto CryptoKit types internally (`SymmetricKey` wraps `CryptoKit.SymmetricKey`; `SigningKey<P256>` wraps `P256.Signing.PrivateKey`).
+- `SecureEnclaveKey` is the exception: it wraps `Security.framework`'s **`SecKey`**, not CryptoKit's `SecureEnclave.P256.Signing.PrivateKey`, and persists via `kSecAttrApplicationTag` so `load(tag:)` can retrieve the same key across launches. CryptoKit's type has no equivalent tag-based lookup — an app would have to persist `dataRepresentation` itself, reinventing what `SecKey` plus the keychain already provide. [ADR-0006](../adr/0006-secure-enclave-first-key-design.md) carries the full comparison.
 - `SealedMessage.combinedRepresentation` carries a 1-byte format version so future suite migrations decode old ciphertexts unambiguously.
 - All comparisons of secret material (HMAC verification, digest equality where secret-adjacent) route through constant-time comparison; `==` on secret types is documented as constant-time.
 - `AuthenticatedContext` (from BolourBiometrics) is *accepted* here via a Core seam protocol so BolourCrypto never imports upward — the parameter is typed as `some PresenceAuthenticated` defined in Core (naming refined during implementation; the layering rule is the invariant).
@@ -155,7 +159,9 @@ let signature = try await deviceKey.signature(for: requestDigest)
 
 ## Future Roadmap
 
-- ECIES-style one-shot sealed boxes to a `VerificationKey` recipient (v0.5).
-- Key-wrapping conveniences (AES-KW) for vault master keys (v0.5, with BolourSecureStorage).
+- ECIES-style one-shot sealed boxes to a `VerificationKey` recipient (was scoped to v0.5; not shipped, unscheduled).
+- ECDH key agreement — `SecureEnclaveKey.sharedSecret(with:)` and `SharedSecret` (was scoped to v0.5; not shipped, unscheduled).
+- Presence-gated Secure Enclave keys — a `presence:`/`protection:` parameter on `create(tag:)` and the `AuthenticatedContext` overload of `signature(for:)` that implies (not shipped, unscheduled).
+- Key-wrapping conveniences (AES-KW) for vault master keys, with BolourSecureStorage (was scoped to v0.5; not shipped — `Vault` derives per-file keys via HKDF instead, which needed no key-wrapping primitive).
 - Adopt post-quantum primitives the moment CryptoKit ships them, behind the same API shapes (tracked; version depends on Apple).
 - `@_spi(Experimental)` envelope-encryption helpers for multi-recipient documents (v2.x).
