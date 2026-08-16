@@ -20,7 +20,7 @@ struct HostClassificationTests {
     @Test(
         "refused non-local hosts",
         arguments: [
-            "example.com", "api.example.com", "blursecurity.test",
+            "example.com", "api.example.com", "boloursecurity.test",
             "8.8.8.8",           // public IPv4
             "172.32.0.1",        // just outside the RFC 1918 172.16.0.0/12 block
             "169.254.1.1",       // link-local, not in our accepted set

@@ -5,7 +5,7 @@ import BolourSecurityCore
 
 @Suite("Trust evaluation")
 struct TrustEvaluationTests {
-    let host = "valid.blursecurity.test"
+    let host = "valid.boloursecurity.test"
 
     /// An evaluator that trusts exactly our test root (no system roots).
     func evaluator(pinning: [PinningPolicy] = []) throws -> TrustEvaluator {
@@ -28,7 +28,7 @@ struct TrustEvaluationTests {
     func wrongHost() async throws {
         let leaf = try Fixture.certificate("leaf-valid")
         await #expect(throws: CertificateError.self) {
-            _ = try await evaluator().evaluate(CertificateChain([leaf]), for: "wrong.blursecurity.test")
+            _ = try await evaluator().evaluate(CertificateChain([leaf]), for: "wrong.boloursecurity.test")
         }
     }
 

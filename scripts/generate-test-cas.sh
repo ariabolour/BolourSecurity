@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 # Generates the checked-in test-CA fixtures for BolourCertificatesTests.
 # Deterministic subjects/SANs and fixed, wide validity windows so fixtures do not expire.
-# Requires OpenSSL 3.x (for -not_before / -not_after). Re-run to regenerate.
+# Requires OpenSSL 3.x (for -not_before / -not_after). Re-run to regenerate — the keys change
+# every time, so PinningTests' known-answer pin literals must be updated to the values echoed
+# at the end of this script, and any test asserting on a subject/SAN string must match the
+# subjects set below (a rename here does not propagate into already-generated binaries).
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
@@ -42,13 +45,13 @@ pin() { openssl x509 -in "$1" -pubkey -noout | openssl pkey -pubin -outform der 
 # (>398 days for leaves issued after 2020-09-01 are rejected as "not standards compliant"), which
 # lets the "valid" fixtures use a long notAfter and never expire.
 make_root "$W/root.key" "$W/root.pem" "/O=BolourSecurity/CN=BolourSecurity Test Root"
-sign_leaf leaf-valid   "/CN=valid.blursecurity.test" "DNS:valid.blursecurity.test" 20190101000000Z 20500101000000Z "$W/root.pem" "$W/root.key"
-sign_leaf leaf-expired "/CN=valid.blursecurity.test" "DNS:valid.blursecurity.test" 20190101000000Z 20190201000000Z "$W/root.pem" "$W/root.key"
-sign_leaf leaf-future  "/CN=valid.blursecurity.test" "DNS:valid.blursecurity.test" 20450101000000Z 20460101000000Z "$W/root.pem" "$W/root.key"
+sign_leaf leaf-valid   "/CN=valid.boloursecurity.test" "DNS:valid.boloursecurity.test" 20190101000000Z 20500101000000Z "$W/root.pem" "$W/root.key"
+sign_leaf leaf-expired "/CN=valid.boloursecurity.test" "DNS:valid.boloursecurity.test" 20190101000000Z 20190201000000Z "$W/root.pem" "$W/root.key"
+sign_leaf leaf-future  "/CN=valid.boloursecurity.test" "DNS:valid.boloursecurity.test" 20450101000000Z 20460101000000Z "$W/root.pem" "$W/root.key"
 
 # A separate, untrusted root + leaf
 make_root "$W/untrusted-root.key" "$W/untrusted-root.pem" "/O=BolourSecurity/CN=BolourSecurity Untrusted Root"
-sign_leaf leaf-untrusted "/CN=valid.blursecurity.test" "DNS:valid.blursecurity.test" 20190101000000Z 20500101000000Z "$W/untrusted-root.pem" "$W/untrusted-root.key"
+sign_leaf leaf-untrusted "/CN=valid.boloursecurity.test" "DNS:valid.boloursecurity.test" 20190101000000Z 20500101000000Z "$W/untrusted-root.pem" "$W/untrusted-root.key"
 
 der "$W/root.pem"           "$OUT/root.der"
 der "$W/leaf-valid.pem"     "$OUT/leaf-valid.der"

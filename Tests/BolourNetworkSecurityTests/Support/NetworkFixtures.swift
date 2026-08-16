@@ -7,7 +7,7 @@ import BolourCertificates
 /// root (for `TrustEvaluator`'s test-anchors path), and a decoy certificate used only to derive
 /// a plausible-but-wrong SPKI pin.
 enum NetworkFixtures {
-    static let pkcs12Passphrase = "blursecurity-test-fixture"
+    static let pkcs12Passphrase = "boloursecurity-test-fixture"
 
     /// Swift Testing runs tests in parallel by default, and every test that stands up a
     /// `LocalTLSServer` calls `serverIdentity()` — without this, two concurrent calls can both
