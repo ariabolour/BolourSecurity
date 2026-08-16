@@ -23,15 +23,44 @@ public struct OAuthConfiguration: Sendable {
     /// OIDC discovery: endpoints fetched and validated from the issuer.
     public static func discovering(
         issuer: URL, clientID: String, redirectURI: URL, scopes: ScopeSet
-    ) -> OAuthConfiguration
+    ) throws(OAuthError) -> OAuthConfiguration
     /// Explicit endpoints for non-OIDC providers.
     public init(authorizationEndpoint: URL, tokenEndpoint: URL,
                 clientID: String, redirectURI: URL, scopes: ScopeSet,
-                revocationEndpoint: URL? = nil)
+                revocationEndpoint: URL? = nil) throws(OAuthError)
     // No clientSecret parameter exists on public-client initializers: secrets in
     // app binaries are not a thing we help people do. Confidential-client config
     // exists only on the clientCredentials surface, documented for server-mediated use.
 }
+```
+
+### URL validation
+
+Both entry points throw, because every URL is checked here rather than at the first network call
+that would have leaked something. Endpoints that arrive later from OIDC discovery are checked
+again on the way in: a configuration-time check cannot vouch for a document fetched afterwards,
+and a discovery response naming a `http://` token endpoint would carry the authorization code —
+and the tokens it buys — in cleartext.
+
+| Role | Rule |
+|---|---|
+| `issuer` | HTTPS, a host, no credentials, no fragment, **no query** (RFC 8414 §2) |
+| `authorization_endpoint`, `token_endpoint` | HTTPS, a host, no credentials, no fragment; **must share the issuer's host** (mix-up hygiene) |
+| `revocation_endpoint`, `jwks_uri` | HTTPS, a host, no credentials, no fragment. *Not* host-matched — hosting these on a sibling domain is ordinary practice, and neither can redirect a code exchange. Rejected rather than silently dropped when present-but-unusable |
+| `redirectURI` | The app's own scheme, or HTTPS. Never plain `http` — including RFC 8252 §7.3's loopback form, which `ASWebAuthenticationSession` (scheme-dispatched) could never deliver to. No fragment; `javascript`/`data`/`vbscript`/`file`/`blob`/`about` refused outright |
+
+The discovery document's own `issuer` member is compared against the issuer that was queried
+(RFC 8414 §3.3) — a provider that disagrees with itself about its identity is one someone else
+may be speaking for.
+
+On the way back, the callback URL is matched against the registered redirect URI on **scheme,
+host, port, and path** (query and fragment excluded — the query is where `code` and `state`
+live), and that check runs *before* `state`. `ASWebAuthenticationSession` dispatches callbacks by
+scheme alone, so a URL arriving at `extractCode` is only known to share the app's scheme; a
+callback aimed at some other entry point in the same app is `redirectURIMismatch`, not a
+misreported CSRF failure.
+
+```swift
 
 public struct ScopeSet: Sendable, Hashable, ExpressibleByArrayLiteral {
     public static let openID: ScopeSet                     // openid profile email building blocks

@@ -2,6 +2,12 @@ import Foundation
 
 /// Where an `OAuthClient`'s endpoints come from: OIDC discovery, resolved lazily and cached for
 /// the client's lifetime, or fixed endpoints supplied directly for non-OIDC providers.
+///
+/// Both entry points **throw**: every URL is validated here, at the earliest possible moment,
+/// rather than at the first network call that would have leaked something. See
+/// ``EndpointValidation`` for the rules and ``MisconfigurationDetail`` for what a rejection says.
+/// Endpoints that arrive later from OIDC discovery are validated again on the way in — a
+/// configuration-time check cannot vouch for a document fetched afterwards.
 public struct OAuthConfiguration: Sendable {
     enum EndpointSource: Sendable {
         case explicit(authorization: URL, token: URL, revocation: URL?)
@@ -20,8 +26,10 @@ public struct OAuthConfiguration: Sendable {
     /// mix-up-attack hygiene) the first time they're needed, then pinned for the client's lifetime.
     public static func discovering(
         issuer: URL, clientID: String, redirectURI: URL, scopes: ScopeSet
-    ) -> OAuthConfiguration {
-        OAuthConfiguration(
+    ) throws(OAuthError) -> OAuthConfiguration {
+        try EndpointValidation.validateIssuer(issuer)
+        try EndpointValidation.validateRedirectURI(redirectURI)
+        return OAuthConfiguration(
             endpointSource: .discovering(issuer: issuer), clientID: clientID,
             redirectURI: redirectURI, scopes: scopes, isOIDC: true
         )
@@ -33,7 +41,13 @@ public struct OAuthConfiguration: Sendable {
     public init(
         authorizationEndpoint: URL, tokenEndpoint: URL,
         clientID: String, redirectURI: URL, scopes: ScopeSet, revocationEndpoint: URL? = nil
-    ) {
+    ) throws(OAuthError) {
+        try EndpointValidation.validateServerEndpoint(authorizationEndpoint, as: .authorization)
+        try EndpointValidation.validateServerEndpoint(tokenEndpoint, as: .token)
+        if let revocationEndpoint {
+            try EndpointValidation.validateServerEndpoint(revocationEndpoint, as: .revocation)
+        }
+        try EndpointValidation.validateRedirectURI(redirectURI)
         self.init(
             endpointSource: .explicit(authorization: authorizationEndpoint, token: tokenEndpoint, revocation: revocationEndpoint),
             clientID: clientID, redirectURI: redirectURI, scopes: scopes, isOIDC: false

@@ -48,7 +48,7 @@ struct OAuthValidationView: View {
         guard let anchor = UIApplication.shared.currentKeyWindow else {
             return "no key window available to present from"
         }
-        let configuration = OAuthConfiguration(
+        let configuration = try OAuthConfiguration(
             authorizationEndpoint: OAuthDemoConfiguration.authorizationEndpoint,
             tokenEndpoint: OAuthDemoConfiguration.tokenEndpoint,
             clientID: OAuthDemoConfiguration.clientID,

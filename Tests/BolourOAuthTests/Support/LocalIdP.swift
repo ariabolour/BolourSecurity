@@ -7,8 +7,16 @@ import BolourCrypto
 /// concurrently running tests never share state — the same lesson `RemoteJWKSetTests` already
 /// encoded for this exact reason.
 final class LocalIdP: @unchecked Sendable {
-    let host = UUID().uuidString
-    var issuer: URL { URL(string: "local-idp://\(host)")! }
+    /// Lowercased on purpose: `https` is a scheme Foundation normalizes, and it lowercases the
+    /// host on the way through — a mixed-case key would no longer match at lookup time.
+    let host = "\(UUID().uuidString.lowercased()).local-idp.test"
+
+    /// **https**, not a custom scheme, because `BolourOAuth` now requires it: every endpoint it
+    /// accepts must be HTTPS, at configuration time and again after discovery. The stub is still
+    /// entirely in-process — `LocalIdPProtocol` intercepts by registered host, so nothing
+    /// resolves, connects, or shakes hands — but the tests now exercise the same validation path
+    /// production code takes instead of routing around it.
+    var issuer: URL { URL(string: "https://\(host)")! }
 
     let signingKey = SigningKey<P256>.software()
     private let lock = NSLock()
@@ -20,6 +28,7 @@ final class LocalIdP: @unchecked Sendable {
     private var _lastTokenForm: [String: String]?
     private var _pendingIDToken: String?
     private var _discoveryEndpointHostOverride: String?
+    private var _discoveryOverrides: [String: String] = [:]
 
     private func withLock<T>(_ body: () -> T) -> T {
         lock.lock(); defer { lock.unlock() }
@@ -45,6 +54,14 @@ final class LocalIdP: @unchecked Sendable {
     var discoveryEndpointHostOverride: String? {
         get { withLock { _discoveryEndpointHostOverride } }
         set { withLock { _discoveryEndpointHostOverride = newValue } }
+    }
+
+    /// Replaces individual discovery-document members with raw strings, so tests can serve a
+    /// document that is well-formed JSON but names an unusable URL (`http://…`, a fragment, a
+    /// disagreeing `issuer`) — the shape a compromised or merely sloppy provider produces.
+    var discoveryOverrides: [String: String] {
+        get { withLock { _discoveryOverrides } }
+        set { withLock { _discoveryOverrides = newValue } }
     }
 
     enum TokenEndpointStub {
@@ -75,14 +92,15 @@ final class LocalIdP: @unchecked Sendable {
     func handleRequest(path: String, body: Data) -> (status: Int, data: Data) {
         switch path {
         case "/.well-known/openid-configuration":
-            let endpointBase = discoveryEndpointHostOverride.map { "local-idp://\($0)" } ?? issuer.absoluteString
-            let doc: [String: Any] = [
+            let endpointBase = discoveryEndpointHostOverride.map { "https://\($0)" } ?? issuer.absoluteString
+            var doc: [String: Any] = [
                 "issuer": issuer.absoluteString,
                 "authorization_endpoint": "\(endpointBase)/authorize",
                 "token_endpoint": "\(endpointBase)/token",
                 "revocation_endpoint": "\(issuer)/revoke",
                 "jwks_uri": "\(issuer)/jwks",
             ]
+            for (key, value) in discoveryOverrides { doc[key] = value }
             return (200, try! JSONSerialization.data(withJSONObject: doc))
 
         case "/jwks":
@@ -141,18 +159,22 @@ final class LocalIdPProtocol: URLProtocol, @unchecked Sendable {
         lock.lock(); idps[idp.host] = idp; lock.unlock()
     }
 
-    override class func canInit(with request: URLRequest) -> Bool { request.url?.scheme == "local-idp" }
+    private static func idp(for request: URLRequest) -> LocalIdP? {
+        guard request.url?.scheme?.lowercased() == "https", let host = request.url?.host?.lowercased() else {
+            return nil
+        }
+        lock.lock(); defer { lock.unlock() }
+        return idps[host]
+    }
+
+    /// Matches on the *registered host*, not merely on the scheme: now that the stub speaks
+    /// https, a scheme-only check would swallow every https request made through any session
+    /// this protocol is installed in.
+    override class func canInit(with request: URLRequest) -> Bool { idp(for: request) != nil }
     override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
 
     override func startLoading() {
-        guard let url = request.url, let host = url.host else {
-            client?.urlProtocol(self, didFailWithError: URLError(.badURL))
-            return
-        }
-        LocalIdPProtocol.lock.lock()
-        let idp = LocalIdPProtocol.idps[host]
-        LocalIdPProtocol.lock.unlock()
-        guard let idp else {
+        guard let url = request.url, let idp = LocalIdPProtocol.idp(for: request) else {
             client?.urlProtocol(self, didFailWithError: URLError(.badURL))
             return
         }

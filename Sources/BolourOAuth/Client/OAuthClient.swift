@@ -160,7 +160,17 @@ public struct OAuthClient: Sendable {
         return url
     }
 
+    /// - Note: The redirect URI is checked **before** `state`. `ASWebAuthenticationSession`
+    ///   dispatches callbacks by scheme alone, so a URL arriving here is only known to share the
+    ///   app's scheme — not to be the redirect URI this configuration registered. Checking the
+    ///   full shape (scheme, host, port, path) first means a callback aimed at some other entry
+    ///   point in the same app is rejected as such, rather than being probed for `state` and
+    ///   reported as a CSRF failure. Query and fragment are excluded from the comparison: the
+    ///   query is where `code` and `state` themselves live.
     private func extractCode(from callbackURL: URL, expectedState: String) throws(OAuthError) -> String {
+        guard EndpointValidation.callbackMatchesRedirectURI(callbackURL, expected: configuration.redirectURI) else {
+            throw OAuthError.redirectURIMismatch
+        }
         let items = URLComponents(url: callbackURL, resolvingAgainstBaseURL: false)?.queryItems ?? []
         guard items.first(where: { $0.name == "state" })?.value == expectedState else {
             throw OAuthError.stateMismatch

@@ -21,6 +21,10 @@ final class FakeAuthorizationSessionPresenting: AuthorizationSessionPresenting, 
     /// IdP associates the nonce with the authorization code server-side.
     var idp: LocalIdP?
     var idTokenSubject = "user-1"
+    /// When set, the callback comes back at THIS URL (query items still appended) instead of the
+    /// scheme's own `://callback` — simulating a provider, or an attacker, redirecting to a
+    /// different entry point that happens to share the app's URL scheme.
+    var callbackURLOverride: URL?
     private(set) var lastPresentedURL: URL?
 
     func present(
@@ -39,7 +43,8 @@ final class FakeAuthorizationSessionPresenting: AuthorizationSessionPresenting, 
             idp.pendingIDToken = try? await idp.idToken(subject: idTokenSubject, audience: queryItems.first(where: { $0.name == "client_id" })?.value ?? "", nonce: nonce)
         }
 
-        var components = URLComponents(string: "\(callbackURLScheme)://callback")!
+        let callbackBase = callbackURLOverride ?? URL(string: "\(callbackURLScheme)://callback")!
+        var components = URLComponents(url: callbackBase, resolvingAgainstBaseURL: false)!
         if let providerErrorCode {
             components.queryItems = [
                 URLQueryItem(name: "error", value: providerErrorCode),
